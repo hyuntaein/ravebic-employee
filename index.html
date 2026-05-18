@@ -428,7 +428,7 @@ body{
     <input id="pin" type="password" placeholder="개인 PIN 번호">
     <button class="primary" onclick="checkPin()">스케줄 보기</button>
     <button class="secondary" onclick="closeScheduleModal()">닫기</button>
-    <p style="font-size:13px;color:#64748b">테스트: 직원1 / 482913<br>관리자가 승인한 최신 일정표를 불러옵니다.</p>
+    <p style="font-size:13px;color:#64748b">테스트: 직원1 / 482913<br>또는 인현태 / 482913</p>
   </div>
 </div>
 
@@ -444,6 +444,7 @@ const firebaseConfig = {
   appId: "1:44012584810:web:540cd8aba9ca8bbf2baf13",
   measurementId: "G-EEN6GM72JT"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 </script>
@@ -458,7 +459,7 @@ const storeHistory={
   "수유센트럴점":["양수도 실사 이력 있음","사진 누락 주의"]
 };
 
-const pins={"직원1":"482913","직원2":"193850","직원3":"111111"};
+const pins={"직원1":"482913","직원2":"193850","직원3":"111111","인현태":"482913"};
 
 window.addEventListener("load",()=>{
   const savedName=localStorage.getItem("ravebicSavedName");
@@ -552,9 +553,7 @@ async function checkPin(){
     closeScheduleModal();
 
   } catch (err) {
-    alert("일정표를 불러오지 못했습니다.
-
-" + err);
+    alert("일정표를 불러오지 못했습니다.\n\n" + err);
   }
 }
 
