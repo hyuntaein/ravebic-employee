@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAVEBIC 개인비서 V5</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  padding:18px;
+  background:#f4f7fb;
+  font-family:Arial,"Malgun Gothic",sans-serif;
+  color:#111827;
+}
+.page{
+  max-width:780px;
+  margin:0 auto;
+  background:#fff;
+  border:1px solid #d6e2f2;
+  border-radius:28px;
+  padding:22px 20px 26px;
+  box-shadow:0 8px 24px rgba(15,23,42,.08);
+}
+.title-wrap{
+  margin-bottom:22px;
+}
+.title-box{
+  width:100%;
+  border:1px solid #9fc3ff;
+  border-radius:22px;
+  padding:22px 12px;
+  text-align:center;
+  font-size:34px;
+  font-weight:900;
+  letter-spacing:.5px;
+  color:#153b73;
+  background:#eaf4ff;
+}
+.row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  margin-bottom:14px;
+}
+.field{
+  border:1px solid #d1d5db;
+  border-radius:22px;
+  min-height:76px;
+  padding:14px 16px;
+  font-size:17px;
+  font-weight:800;
+  background:#fffdf5;
+}
+.field input{
+  display:block;
+  width:100%;
+  border:1px solid #d6d3c2;
+  border-radius:14px;
+  outline:none;
+  background:#fffefb;
+  margin-top:8px;
+  padding:12px;
+  font-size:16px;
+}
+.fixed-line{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:4px 0 18px 4px;
+  font-size:16px;
+  cursor:pointer;
+  user-select:none;
+}
+.round-check{
+  width:23px;
+  height:23px;
+  border:2px solid #a8b5c7;
+  border-radius:8px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:#fff;
+  cursor:pointer;
+  transition:.18s;
+  flex-shrink:0;
+}
+.round-check.active{
+  background:#60a5fa;
+  border-color:#2563eb;
+  box-shadow:0 0 0 4px rgba(96,165,250,.18);
+}
+.round-check.active::after{
+  content:"✓";
+  color:#fff;
+  font-weight:900;
+  font-size:14px;
+}
+.lookup-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin:8px 0 20px;
+}
+.lookup-btn{
+  border:1px solid #c6d6ee;
+  border-radius:18px;
+  background:#f8fbff;
+  min-height:50px;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+  color:#143d7a;
+}
+.my-history{
+  display:none;
+  border:1px solid #c6d6ee;
+  border-radius:18px;
+  background:#f8fbff;
+  padding:14px;
+  margin-bottom:20px;
+  font-size:14px;
+  line-height:1.55;
+}
+.history-title{
+  font-weight:900;
+  margin-bottom:8px;
+}
+.history-item{
+  background:#fff;
+  border:1px solid #dbe5f2;
+  border-radius:14px;
+  padding:10px;
+  margin-top:8px;
+}
+.schedule{
+  border:1px solid #d1d5db;
+  border-radius:22px;
+  min-height:76px;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  font-weight:900;
+  cursor:pointer;
+  background:#fff;
+}
+.category-area{
+  margin:22px 0 24px;
+  padding:18px 14px;
+  border:1px solid #e0e7f2;
+  border-radius:24px;
+  background:#ffffff;
+}
+.cat-row{
+  display:grid;
+  grid-template-columns:80px 1fr;
+  align-items:center;
+  margin-bottom:15px;
+}
+.cat-row:last-child{margin-bottom:0}
+.cat-title{
+  font-weight:900;
+  font-size:15px;
+  color:#111827;
+}
+.cat-options{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.option{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  cursor:pointer;
+  user-select:none;
+  font-size:14px;
+  min-width:78px;
+}
+.option .label{white-space:nowrap}
+.note-title{
+  font-size:19px;
+  font-weight:900;
+  margin:8px 0 8px;
+}
+.note-box{
+  border:1px solid #d1d5db;
+  border-radius:24px;
+  min-height:165px;
+  padding:16px;
+  margin-bottom:24px;
+  background:#fffdf5;
+}
+.note-box textarea{
+  width:100%;
+  min-height:82px;
+  border:1px solid #d6d3c2;
+  border-radius:16px;
+  outline:none;
+  resize:vertical;
+  font-size:16px;
+  padding:12px;
+  background:#fffefb;
+}
+.store-history{
+  margin-top:10px;
+  padding:10px;
+  border:1px solid #dbe5f2;
+  border-radius:14px;
+  background:#f8fbff;
+  font-size:14px;
+  color:#334155;
+  line-height:1.55;
+}
+.upload-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  margin-bottom:8px;
+}
+.upload-box{
+  border:1px solid #c6d6ee;
+  border-radius:22px;
+  min-height:82px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  font-weight:900;
+  cursor:pointer;
+  background:#fff;
+}
+.upload-box.upload{background:#f3fff6;color:#136f35}
+.upload-box.camera{background:#f2f7ff;color:#1d4ed8}
+.upload-help{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  font-size:13px;
+  color:#64748b;
+  text-align:center;
+  margin-bottom:14px;
+}
+.file-list{margin:8px 0 18px}
+.file-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  padding:9px 11px;
+  margin-top:7px;
+  border:1px solid #dbe5f2;
+  background:#f8fbff;
+  border-radius:14px;
+  font-size:14px;
+}
+.file-item button{
+  border:none;
+  background:#e5e7eb;
+  border-radius:8px;
+  padding:6px 9px;
+  cursor:pointer;
+}
+.submit-btn{
+  width:100%;
+  min-height:66px;
+  border:none;
+  border-radius:22px;
+  background:#2563eb;
+  color:white;
+  font-size:25px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 7px 16px rgba(37,99,235,.24);
+}
+.lookup-btn:hover,.schedule:hover,.upload-box:hover{
+  filter:brightness(.98);
+}
+.submit-btn:hover{background:#1d4ed8}
+.result{
+  display:none;
+  margin-top:14px;
+  padding:13px;
+  border:1px solid #16a34a;
+  border-radius:16px;
+  background:#dcfce7;
+  font-size:15px;
+  line-height:1.65;
+}
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:99;
+}
+.modal-card{
+  width:100%;
+  max-width:420px;
+  background:white;
+  border-radius:18px;
+  padding:22px;
+}
+.modal-card h3{margin-top:0}
+.modal-card input{
+  width:100%;
+  padding:13px;
+  border:1px solid #cbd5e1;
+  border-radius:12px;
+  margin-bottom:10px;
+  font-size:16px;
+}
+.modal-card button{
+  width:100%;
+  padding:13px;
+  margin-top:8px;
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:900;
+}
+.primary{background:#111827;color:white}
+.secondary{background:#e5e7eb;color:#111827}
+@media(max-width:700px){
+  body{padding:8px}
+  .page{padding:14px 12px 20px;border-radius:22px}
+  .title-box{font-size:27px;padding:20px 8px}
+  .row,.upload-row,.upload-help,.lookup-row{grid-template-columns:1fr;gap:12px}
+  .cat-row{grid-template-columns:62px 1fr;margin-bottom:13px}
+  .cat-options{gap:10px}
+  .option{font-size:13px;min-width:68px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="title-wrap">
+    <div class="title-box">RAVEBIC 개인비서</div>
+  </div>
+
+  <div class="row">
+    <div class="field">이름:<input id="name" placeholder="직접 입력"></div>
+    <div class="field">날짜:<input id="date" type="datetime-local"></div>
+  </div>
+
+  <label class="fixed-line" onclick="toggleRemember()">
+    <span id="rememberSquare" class="round-check"></span>
+    고정으로 로그인
+  </label>
+
+  <div class="lookup-row">
+    <button class="lookup-btn" onclick="showMySubmissions()">내 제출내역 보기</button>
+    <button class="lookup-btn" onclick="hideMySubmissions()">제출내역 닫기</button>
+  </div>
+
+  <div id="myHistoryPanel" class="my-history"></div>
+
+  <div class="row">
+    <div class="field">점포명:<input id="store" placeholder="직접 입력"></div>
+    <div class="schedule" onclick="openScheduleModal()">일정표</div>
+  </div>
+
+  <div class="category-area">
+    <div class="cat-row">
+      <div class="cat-title">지역</div>
+      <div class="cat-options" id="regionGroup">
+        <div class="option" onclick="selectOne('region','서울경기',this)"><span class="round-check"></span><span class="label">서울경기</span></div>
+        <div class="option" onclick="selectOne('region','충청도',this)"><span class="round-check"></span><span class="label">충청도</span></div>
+        <div class="option" onclick="selectOne('region','경상도',this)"><span class="round-check"></span><span class="label">경상도</span></div>
+        <div class="option" onclick="selectOne('region','기타지역',this)"><span class="round-check"></span><span class="label">기타</span></div>
+      </div>
+    </div>
+
+    <div class="cat-row">
+      <div class="cat-title">브랜드</div>
+      <div class="cat-options" id="brandGroup">
+        <div class="option" onclick="selectOne('brand','이마트24',this)"><span class="round-check"></span><span class="label">이마트24</span></div>
+        <div class="option" onclick="selectOne('brand','세븐일레븐',this)"><span class="round-check"></span><span class="label">세븐</span></div>
+        <div class="option" onclick="selectOne('brand','기타',this)"><span class="round-check"></span><span class="label">기타</span></div>
+      </div>
+    </div>
+
+    <div class="cat-row">
+      <div class="cat-title">업무</div>
+      <div class="cat-options" id="workTypeGroup">
+        <div class="option" onclick="selectOne('workType','정기실사',this)"><span class="round-check"></span><span class="label">정기</span></div>
+        <div class="option" onclick="selectOne('workType','인수실사',this)"><span class="round-check"></span><span class="label">인수</span></div>
+        <div class="option" onclick="selectOne('workType','양수도',this)"><span class="round-check"></span><span class="label">양수도</span></div>
+        <div class="option" onclick="selectOne('workType','폐점',this)"><span class="round-check"></span><span class="label">폐점</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note-title">점포특이사항 기재:</div>
+  <div class="note-box">
+    <textarea id="note" placeholder="점포특이사항을 입력해주세요.&#10;&#10;(필수: 세븐 인수실사시 마스터사용 점포명/매가 기재)"></textarea>
+    <div id="historyBox" class="store-history">점포명을 입력하면 이전 특이사항이 표시됩니다.</div>
+  </div>
+
+  <div class="upload-row">
+    <div class="upload-box upload" onclick="document.getElementById('fileInput').click()">서류 올리기</div>
+    <div class="upload-box camera" onclick="document.getElementById('cameraInput').click()">사진찍기</div>
+  </div>
+
+  <div class="upload-help">
+    <div>노트북 폴더 / 핸드폰 사진첩에서 선택</div>
+    <div>카메라 실행 후 촬영 사진 첨부</div>
+  </div>
+
+  <input id="fileInput" type="file" multiple hidden accept="image/*,.pdf,.xlsx,.xls,.doc,.docx">
+  <input id="cameraInput" type="file" hidden accept="image/*" capture="environment">
+  <div id="fileList" class="file-list"></div>
+
+  <button class="submit-btn" onclick="submitForm()">제출</button>
+  <div id="result" class="result"></div>
+</div>
+
+<div id="scheduleModal" class="modal">
+  <div class="modal-card">
+    <h3>스케줄 보안 확인</h3>
+    <input id="pinName" placeholder="직원 이름">
+    <input id="pin" type="password" placeholder="개인 PIN 번호">
+    <button class="primary" onclick="checkPin()">스케줄 보기</button>
+    <button class="secondary" onclick="closeScheduleModal()">닫기</button>
+    <p style="font-size:13px;color:#64748b">테스트: 직원1 / 482913<br>관리자가 승인한 최신 일정표를 불러옵니다.</p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBmvE4sKxvO0OWTz2Nt70o-RuCKBTPds_0",
+  authDomain: "ravebic-app.firebaseapp.com",
+  projectId: "ravebic-app",
+  storageBucket: "ravebic-app.firebasestorage.app",
+  messagingSenderId: "44012584810",
+  appId: "1:44012584810:web:540cd8aba9ca8bbf2baf13",
+  measurementId: "G-EEN6GM72JT"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
+
+<script>
+let rememberName=false;
+let selected={region:"",brand:"",workType:""};
+
+const storeHistory={
+  "이마트24 강남점":["입점 전 점주 통화 필수","냉장 재고 사진 중요","마스터사장님 매가 기재 요청"],
+  "종로창신역점":["오전 9시 입점 요청","점장 통화 후 방문 필요"],
+  "수유센트럴점":["양수도 실사 이력 있음","사진 누락 주의"]
+};
+
+const pins={"직원1":"482913","직원2":"193850","직원3":"111111"};
+
+window.addEventListener("load",()=>{
+  const savedName=localStorage.getItem("ravebicSavedName");
+  if(savedName){
+    document.getElementById("name").value=savedName;
+    document.getElementById("pinName").value=savedName;
+    rememberName=true;
+    document.getElementById("rememberSquare").classList.add("active");
+  }
+  const now=new Date();
+  const local=new Date(now.getTime()-now.getTimezoneOffset()*60000);
+  document.getElementById("date").value=local.toISOString().slice(0,16);
+});
+
+document.getElementById("name").addEventListener("input",function(){
+  document.getElementById("pinName").value=this.value;
+  if(rememberName){
+    localStorage.setItem("ravebicSavedName",this.value.trim());
+  }
+});
+
+function toggleRemember(){
+  rememberName=!rememberName;
+  document.getElementById("rememberSquare").classList.toggle("active",rememberName);
+  const name=document.getElementById("name").value.trim();
+  if(rememberName&&name){localStorage.setItem("ravebicSavedName",name);}
+  if(!rememberName){localStorage.removeItem("ravebicSavedName");}
+}
+
+function selectOne(group,value,element){
+  selected[group]=value;
+  let groupId=group==="region"?"regionGroup":group==="brand"?"brandGroup":"workTypeGroup";
+  document.getElementById(groupId).querySelectorAll(".round-check").forEach(s=>s.classList.remove("active"));
+  element.querySelector(".round-check").classList.add("active");
+}
+
+document.getElementById("store").addEventListener("input",function(){
+  const value=this.value.trim();
+  const box=document.getElementById("historyBox");
+  if(storeHistory[value]){
+    box.innerHTML="<b>이전 특이사항</b><br>"+storeHistory[value].map(v=>"• "+v).join("<br>");
+  }else if(value){
+    box.innerHTML="등록된 이전 특이사항이 없습니다. 새 특이사항을 입력하면 누적됩니다.";
+  }else{
+    box.innerHTML="점포명을 입력하면 이전 특이사항이 표시됩니다.";
+  }
+});
+
+function addFiles(fileList){
+  const list=document.getElementById("fileList");
+  Array.from(fileList).forEach(file=>{
+    const div=document.createElement("div");
+    div.className="file-item";
+    div.innerHTML="<span>첨부됨: "+file.name+"</span><button onclick='this.parentElement.remove()'>삭제</button>";
+    list.appendChild(div);
+  });
+}
+
+document.getElementById("fileInput").addEventListener("change",e=>addFiles(e.target.files));
+document.getElementById("cameraInput").addEventListener("change",e=>addFiles(e.target.files));
+
+function openScheduleModal(){document.getElementById("scheduleModal").style.display="flex";}
+function closeScheduleModal(){document.getElementById("scheduleModal").style.display="none";}
+
+async function checkPin(){
+  const name = document.getElementById("pinName").value.trim();
+  const pin = document.getElementById("pin").value.trim();
+
+  if(pins[name] !== pin){
+    alert("직원 이름 또는 PIN이 맞지 않습니다.");
+    return;
+  }
+
+  try {
+    const doc = await db.collection("settings").doc("approvedSchedule").get();
+
+    if (!doc.exists) {
+      alert("아직 승인된 일정표가 없습니다.");
+      return;
+    }
+
+    const data = doc.data();
+    const scheduleUrl = data.scheduleUrl || data.pdfUrl;
+
+    if (!scheduleUrl) {
+      alert("승인된 일정표 주소가 없습니다.");
+      return;
+    }
+
+    window.open(scheduleUrl, "_blank");
+    closeScheduleModal();
+
+  } catch (err) {
+    alert("일정표를 불러오지 못했습니다.
+
+" + err);
+  }
+}
+
+function getSavedSubmissions(){
+  try{return JSON.parse(localStorage.getItem("ravebicSubmissions")||"[]");}
+  catch(e){return [];}
+}
+
+function saveSubmission(record){
+  const all=getSavedSubmissions();
+  all.push(record);
+  localStorage.setItem("ravebicSubmissions",JSON.stringify(all));
+}
+
+function showMySubmissions(){
+  const name=document.getElementById("name").value.trim();
+  const panel=document.getElementById("myHistoryPanel");
+  if(!name){alert("먼저 이름을 입력해주세요.");return;}
+
+  const oneMonthAgo=new Date(Date.now()-30*24*60*60*1000);
+  const list=getSavedSubmissions()
+    .filter(r=>r.name===name)
+    .filter(r=>new Date(r.submittedAt)>=oneMonthAgo)
+    .sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt));
+
+  panel.style.display="block";
+  if(list.length===0){
+    panel.innerHTML="<div class='history-title'>최근 1개월 제출내역</div>해당 이름으로 저장된 제출내역이 없습니다.";
+    return;
+  }
+
+  panel.innerHTML="<div class='history-title'>최근 1개월 제출내역 ("+list.length+"건)</div>"+
+    list.map(r=>"<div class='history-item'><b>"+r.store+"</b><br>제출: "+new Date(r.submittedAt).toLocaleString()+"<br>구분: "+r.region+" / "+r.brand+" / "+r.workType+"<br>특이사항: "+(r.note||"없음")+"</div>").join("");
+}
+
+function hideMySubmissions(){
+  document.getElementById("myHistoryPanel").style.display="none";
+}
+
+function submitForm(){
+  const name=document.getElementById("name").value.trim();
+  const date=document.getElementById("date").value;
+  const store=document.getElementById("store").value.trim();
+  const note=document.getElementById("note").value.trim();
+
+  if(!name)return alert("이름을 입력해주세요.");
+  if(!date)return alert("날짜를 입력해주세요.");
+  if(!store)return alert("점포명을 입력해주세요.");
+  if(!selected.region)return alert("지역을 선택해주세요.");
+  if(!selected.brand)return alert("브랜드를 선택해주세요.");
+  if(!selected.workType)return alert("업무유형을 선택해주세요.");
+  if(document.querySelectorAll(".file-item").length === 0){
+    return alert("사진찍기 또는 서류올리기 중 하나 이상 첨부해야 제출할 수 있습니다.");
+  }
+
+  const record={
+    name,date,store,note,
+    region:selected.region,
+    brand:selected.brand,
+    workType:selected.workType,
+    submittedAt:new Date().toISOString()
+  };
+  saveSubmission(record);
+
+  const result=document.getElementById("result");
+  result.style.display="block";
+  result.innerHTML="<b>제출 테스트 완료</b><br>직원명: "+name+"<br>날짜: "+date+"<br>점포명: "+store+"<br>지역: "+selected.region+"<br>브랜드: "+selected.brand+"<br>업무유형: "+selected.workType+"<br>특이사항: "+(note||"없음")+"<br>첨부파일: "+document.querySelectorAll(".file-item").length+"개<br>서버 실제 제출시간 예시: "+new Date().toLocaleString();
+}
+</script>
+</body>
+</html>
