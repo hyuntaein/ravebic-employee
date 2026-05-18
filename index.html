@@ -428,12 +428,13 @@ body{
     <input id="pin" type="password" placeholder="개인 PIN 번호">
     <button class="primary" onclick="checkPin()">스케줄 보기</button>
     <button class="secondary" onclick="closeScheduleModal()">닫기</button>
-    <p style="font-size:13px;color:#64748b">테스트: 직원1 / 482913<br>또는 인현태 / 482913</p>
+    <p style="font-size:13px;color:#64748b">테스트: 직원1 / 482913</p>
   </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyBmvE4sKxvO0OWTz2Nt70o-RuCKBTPds_0",
@@ -447,11 +448,13 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const storage = firebase.storage();
 </script>
 
 <script>
 let rememberName=false;
 let selected={region:"",brand:"",workType:""};
+let attachedFiles=[];
 
 const storeHistory={
   "이마트24 강남점":["입점 전 점주 통화 필수","냉장 재고 사진 중요","마스터사장님 매가 기재 요청"],
@@ -510,12 +513,22 @@ document.getElementById("store").addEventListener("input",function(){
 
 function addFiles(fileList){
   const list=document.getElementById("fileList");
+
   Array.from(fileList).forEach(file=>{
+    const fileId = "file_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    attachedFiles.push({ id:fileId, file:file });
+
     const div=document.createElement("div");
     div.className="file-item";
-    div.innerHTML="<span>첨부됨: "+file.name+"</span><button onclick='this.parentElement.remove()'>삭제</button>";
+    div.setAttribute("data-file-id", fileId);
+    div.innerHTML="<span>첨부됨: "+file.name+"</span><button onclick='removeAttachedFile(\""+fileId+"\", this)'>삭제</button>";
     list.appendChild(div);
   });
+}
+
+function removeAttachedFile(fileId, btn){
+  attachedFiles = attachedFiles.filter(item => item.id !== fileId);
+  btn.parentElement.remove();
 }
 
 document.getElementById("fileInput").addEventListener("change",e=>addFiles(e.target.files));
@@ -525,18 +538,18 @@ function openScheduleModal(){document.getElementById("scheduleModal").style.disp
 function closeScheduleModal(){document.getElementById("scheduleModal").style.display="none";}
 
 async function checkPin(){
-  const name = document.getElementById("pinName").value.trim();
-  const pin = document.getElementById("pin").value.trim();
+  const name=document.getElementById("pinName").value.trim();
+  const pin=document.getElementById("pin").value.trim();
 
-  if(pins[name] !== pin){
+  if(pins[name]!==pin){
     alert("직원 이름 또는 PIN이 맞지 않습니다.");
     return;
   }
 
-  try {
+  try{
     const doc = await db.collection("settings").doc("approvedSchedule").get();
 
-    if (!doc.exists) {
+    if(!doc.exists){
       alert("아직 승인된 일정표가 없습니다.");
       return;
     }
@@ -544,7 +557,7 @@ async function checkPin(){
     const data = doc.data();
     const scheduleUrl = data.scheduleUrl || data.pdfUrl;
 
-    if (!scheduleUrl) {
+    if(!scheduleUrl){
       alert("승인된 일정표 주소가 없습니다.");
       return;
     }
@@ -552,7 +565,7 @@ async function checkPin(){
     window.open(scheduleUrl, "_blank");
     closeScheduleModal();
 
-  } catch (err) {
+  }catch(err){
     alert("일정표를 불러오지 못했습니다.\n\n" + err);
   }
 }
@@ -593,7 +606,9 @@ function hideMySubmissions(){
   document.getElementById("myHistoryPanel").style.display="none";
 }
 
-function submitForm(){
+async function submitForm(){
+  const btn = document.querySelector(".submit-btn");
+
   const name=document.getElementById("name").value.trim();
   const date=document.getElementById("date").value;
   const store=document.getElementById("store").value.trim();
@@ -605,23 +620,78 @@ function submitForm(){
   if(!selected.region)return alert("지역을 선택해주세요.");
   if(!selected.brand)return alert("브랜드를 선택해주세요.");
   if(!selected.workType)return alert("업무유형을 선택해주세요.");
-  if(document.querySelectorAll(".file-item").length === 0){
+  if(attachedFiles.length === 0){
     return alert("사진찍기 또는 서류올리기 중 하나 이상 첨부해야 제출할 수 있습니다.");
   }
 
-  const record={
-    name,date,store,note,
-    region:selected.region,
-    brand:selected.brand,
-    workType:selected.workType,
-    submittedAt:new Date().toISOString()
-  };
-  saveSubmission(record);
+  try{
+    btn.disabled = true;
+    btn.innerText = "제출 중...";
 
-  const result=document.getElementById("result");
-  result.style.display="block";
-  result.innerHTML="<b>제출 테스트 완료</b><br>직원명: "+name+"<br>날짜: "+date+"<br>점포명: "+store+"<br>지역: "+selected.region+"<br>브랜드: "+selected.brand+"<br>업무유형: "+selected.workType+"<br>특이사항: "+(note||"없음")+"<br>첨부파일: "+document.querySelectorAll(".file-item").length+"개<br>서버 실제 제출시간 예시: "+new Date().toLocaleString();
+    const createdAt = new Date();
+    const docRef = await db.collection("submissions").add({
+      name: name,
+      date: date,
+      store: store,
+      region: selected.region,
+      brand: selected.brand,
+      workType: selected.workType,
+      note: note,
+      status: "미확인",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      createdAtIso: createdAt.toISOString(),
+      files: [],
+      fileCount: attachedFiles.length
+    });
+
+    const uploadedFiles = [];
+
+    for(const item of attachedFiles){
+      const file = item.file;
+      const safeName = file.name.replace(/[\\/:*?"<>|#%]/g, "_");
+      const path = "submissions/" + docRef.id + "/" + Date.now() + "_" + safeName;
+      const ref = storage.ref().child(path);
+
+      await ref.put(file);
+      const url = await ref.getDownloadURL();
+
+      uploadedFiles.push({
+        name: file.name,
+        path: path,
+        url: url,
+        type: file.type || "",
+        size: file.size || 0
+      });
+    }
+
+    await docRef.update({
+      files: uploadedFiles,
+      attachmentCount: uploadedFiles.length
+    });
+
+    const record={
+      name,date,store,note,
+      region:selected.region,
+      brand:selected.brand,
+      workType:selected.workType,
+      submittedAt:createdAt.toISOString()
+    };
+    saveSubmission(record);
+
+    const result=document.getElementById("result");
+    result.style.display="block";
+    result.innerHTML="<b>제출 완료</b><br>직원명: "+name+"<br>날짜: "+date+"<br>점포명: "+store+"<br>지역: "+selected.region+"<br>브랜드: "+selected.brand+"<br>업무유형: "+selected.workType+"<br>특이사항: "+(note||"없음")+"<br>첨부파일: "+uploadedFiles.length+"개<br>서버 제출시간: "+createdAt.toLocaleString();
+
+    alert("제출이 완료되었습니다.");
+
+  }catch(err){
+    alert("제출 실패:\n\n" + err);
+  }finally{
+    btn.disabled = false;
+    btn.innerText = "제출";
+  }
 }
+
 </script>
 </body>
 </html>
