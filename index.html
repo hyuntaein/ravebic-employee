@@ -413,7 +413,7 @@ body{
     <div>카메라 실행 후 촬영 사진 첨부</div>
   </div>
 
-  <input id="fileInput" type="file" multiple hidden accept="image/*,.pdf,.xlsx,.xls,.doc,.docx">
+  <input id="fileInput" type="file" multiple hidden>
   <input id="cameraInput" type="file" hidden accept="image/*" capture="environment">
   <div id="fileList" class="file-list"></div>
 
@@ -625,13 +625,40 @@ function hideMySubmissions(){
   document.getElementById("myHistoryPanel").style.display="none";
 }
 
-function submitForm(){
+
+async function verifyRegisteredStaffName(name){
+  if(typeof db === "undefined"){
+    alert("Firebase 연결이 아직 준비되지 않았습니다. 새로고침 후 다시 시도해주세요.");
+    return false;
+  }
+
+  const staffDoc = await db.collection("staffPins").doc(name).get();
+
+  if(!staffDoc.exists){
+    alert("관리자에 등록되지 않은 직원명입니다.\n\n직원명을 확인하거나 관리자에게 등록 요청하세요.");
+    return false;
+  }
+
+  const staff = staffDoc.data();
+
+  if(staff.active === false){
+    alert("비활성화된 직원명입니다. 관리자에게 문의하세요.");
+    return false;
+  }
+
+  return true;
+}
+
+async function submitForm(){
   const name=document.getElementById("name").value.trim();
   const date=document.getElementById("date").value;
   const store=document.getElementById("store").value.trim();
   const note=document.getElementById("note").value.trim();
 
   if(!name)return alert("이름을 입력해주세요.");
+
+  const isRegisteredStaff = await verifyRegisteredStaffName(name);
+  if(!isRegisteredStaff) return;
   if(!date)return alert("날짜를 입력해주세요.");
   if(!store)return alert("점포명을 입력해주세요.");
   if(!selected.region)return alert("지역을 선택해주세요.");
