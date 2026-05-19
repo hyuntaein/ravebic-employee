@@ -346,6 +346,20 @@ body{
 .correction-upload input{display:block;width:100%;max-width:260px}
 .correction-upload button{border:none;background:#ef4444;color:#fff;border-radius:10px;padding:10px 12px;font-weight:900;cursor:pointer}
 .correction-done{background:#ecfdf5;border-color:#86efac;color:#166534}
+
+/* RAVEBIC_CORRECTION_RED_ALERT_V2 */
+#correctionAlertBtn.correction-alert-active{
+  background:#ef4444 !important;
+  color:#fff !important;
+  border:1px solid #dc2626 !important;
+  box-shadow:0 0 0 4px rgba(239,68,68,.14), 0 8px 18px rgba(239,68,68,.22) !important;
+  animation:ravebicAlertPulse 1.2s infinite;
+}
+@keyframes ravebicAlertPulse{
+  0%{transform:scale(1)}
+  50%{transform:scale(1.015)}
+  100%{transform:scale(1)}
+}
 </style>
 </head>
 <body>
@@ -367,7 +381,7 @@ body{
   <div class="lookup-row">
     <button class="lookup-btn" onclick="showMySubmissions()">내 제출내역 보기</button>
     <button class="lookup-btn" onclick="hideMySubmissions()">제출내역 닫기</button>
-    <button class="lookup-btn" onclick="showCorrectionRequests()">보완요청함 확인</button>
+    <button id="correctionAlertBtn" class="lookup-btn" onclick="showCorrectionRequests()">보완요청함 확인</button>
   </div>
 
   <div id="myHistoryPanel" class="my-history"></div>
@@ -486,6 +500,7 @@ window.addEventListener("load",()=>{
   const now=new Date();
   const local=new Date(now.getTime()-now.getTimezoneOffset()*60000);
   document.getElementById("date").value=local.toISOString().slice(0,16);
+  setTimeout(updateCorrectionAlertCount, 500);
 });
 
 document.getElementById("name").addEventListener("input",function(){
@@ -493,6 +508,8 @@ document.getElementById("name").addEventListener("input",function(){
   if(rememberName){
     localStorage.setItem("ravebicSavedName",this.value.trim());
   }
+  clearTimeout(window.ravebicCorrectionAlertTimer);
+  window.ravebicCorrectionAlertTimer=setTimeout(updateCorrectionAlertCount, 600);
 });
 
 function toggleRemember(){
@@ -657,6 +674,40 @@ function hideMySubmissions(){
 
 
 
+
+async function updateCorrectionAlertCount(){
+  const btn=document.getElementById("correctionAlertBtn");
+  if(!btn || typeof db === "undefined") return;
+
+  const name=document.getElementById("name").value.trim();
+  if(!name){
+    btn.classList.remove("correction-alert-active");
+    btn.textContent="보완요청함 확인";
+    return;
+  }
+
+  try{
+    const snap=await db.collection("submissions").where("name","==",name).get();
+    let count=0;
+    snap.forEach(doc=>{
+      const d=doc.data() || {};
+      if((d.status||"")==="보완요청" && d.correctionResolved !== true){
+        count++;
+      }
+    });
+
+    if(count>0){
+      btn.classList.add("correction-alert-active");
+      btn.textContent="🔴 보완요청 " + count + "건";
+    }else{
+      btn.classList.remove("correction-alert-active");
+      btn.textContent="보완요청함 확인";
+    }
+  }catch(e){
+    console.log("보완요청 알림 확인 실패", e);
+  }
+}
+
 async function showCorrectionRequests(){
   const name=document.getElementById("name").value.trim();
   const panel=document.getElementById("correctionPanel");
@@ -680,9 +731,14 @@ async function showCorrectionRequests(){
     rows.sort((a,b)=>new Date(b.correctionRequestedAtText||b.submittedAtText||0)-new Date(a.correctionRequestedAtText||a.submittedAtText||0));
 
     if(rows.length===0){
+      const btn=document.getElementById("correctionAlertBtn");
+      if(btn){ btn.classList.remove("correction-alert-active"); btn.textContent="보완요청함 확인"; }
       panel.innerHTML="<div class='history-title'>보완요청함</div>현재 보완요청이 없습니다.";
       return;
     }
+
+    const btn=document.getElementById("correctionAlertBtn");
+    if(btn){ btn.classList.add("correction-alert-active"); btn.textContent="🔴 보완요청 "+rows.length+"건"; }
 
     panel.innerHTML="<div class='history-title'>보완요청함 ("+rows.length+"건)</div>"+
       rows.map(r=>{
@@ -743,6 +799,7 @@ async function submitCorrectionFiles(docId){
 
     alert("보완서류 제출이 완료되었습니다.");
     showCorrectionRequests();
+    setTimeout(updateCorrectionAlertCount, 700);
   }catch(err){
     alert("보완서류 제출 실패:\n\n"+(err.message || err));
   }
