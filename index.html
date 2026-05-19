@@ -501,7 +501,7 @@ body{
     <div class="note-guide">아래에는 점포 특이사항을 적어주세요. 제출하면 관리자 화면에는 인원이름/건수/걸린시간/특이사항이 함께 정리되어 표시됩니다.</div>
     <textarea id="note" placeholder="점포 특이사항 및 세븐인수실사시 마스터사용 점포명과 매가 필수기재"></textarea>
     <button type="button" class="history-lookup-btn" onclick="loadStoreHistoryFromFirebase()">이전 특이사항 조회</button>
-    <div id="historyBox" class="store-history">점포명을 입력한 뒤 엔터 또는 조회 버튼을 누르면 이전 특이사항이 표시됩니다.</div>
+    <div id="historyBox" class="store-history">점포명, 지역, 브랜드를 입력/선택한 뒤 엔터 또는 조회 버튼을 누르면 이전 특이사항이 표시됩니다.</div>
   </div>
 
   <div class="upload-row">
@@ -619,10 +619,10 @@ document.getElementById("store").addEventListener("input",function(){
   const value=this.value.trim();
   const box=document.getElementById("historyBox");
   if(!value){
-    box.innerHTML="점포명을 입력한 뒤 엔터 또는 조회 버튼을 누르면 이전 특이사항이 표시됩니다.";
+    box.innerHTML="점포명, 지역, 브랜드를 입력/선택한 뒤 엔터 또는 조회 버튼을 누르면 이전 특이사항이 표시됩니다.";
     return;
   }
-  box.innerHTML="점포명을 입력한 뒤 엔터 또는 조회 버튼을 누르면 이전 특이사항을 조회합니다.";
+  box.innerHTML="점포명, 지역, 브랜드 기준으로 이전 특이사항을 조회합니다.";
   clearTimeout(window.ravebicStoreHistoryTimer);
   window.ravebicStoreHistoryTimer=setTimeout(loadStoreHistoryFromFirebase, 900);
 });
@@ -646,29 +646,43 @@ async function loadStoreHistoryFromFirebase(){
   const storeEl=document.getElementById("store");
   const box=document.getElementById("historyBox");
   const value=storeEl ? storeEl.value.trim() : "";
+  const selectedRegion = selected.region || "";
+  const selectedBrand = selected.brand || "";
 
   if(!box) return;
   if(!value){
-    box.innerHTML="점포명을 입력한 뒤 엔터 또는 조회 버튼을 누르면 이전 특이사항이 표시됩니다.";
+    box.innerHTML="점포명, 지역, 브랜드를 입력/선택한 뒤 엔터 또는 조회 버튼을 누르면 이전 특이사항이 표시됩니다.";
+    return;
+  }
+  if(!selectedRegion || !selectedBrand){
+    box.innerHTML="<b>조회 조건 부족</b><br>같은 점포명이라도 지역/브랜드가 다르면 다른 점포입니다.<br>먼저 <b>지역</b>과 <b>브랜드</b>를 선택한 뒤 조회해주세요.";
     return;
   }
 
-  box.innerHTML="<b>이전 특이사항 조회 중...</b>";
+  box.innerHTML="<b>이전 특이사항 조회 중...</b><br>조건: "+escText(value)+" / "+escText(selectedRegion)+" / "+escText(selectedBrand);
 
   try{
     let rows=[];
 
-    // 1차: 점포명이 정확히 같은 제출건 조회
-    const snap=await db.collection("submissions").where("store", "==", value).get();
+    // 1차: 점포명 + 지역 + 브랜드가 정확히 같은 제출건 조회
+    const snap=await db.collection("submissions")
+      .where("store", "==", value)
+      .where("region", "==", selectedRegion)
+      .where("brand", "==", selectedBrand)
+      .get();
     snap.forEach(doc=>rows.push({id:doc.id, ...doc.data()}));
 
-    // 2차: 띄어쓰기 차이 때문에 못 찾는 경우를 위해 최근 제출건에서 점포명 보정 검색
+    // 2차: 띄어쓰기 차이 때문에 못 찾는 경우를 위해 최근 제출건에서 보정 검색
     if(rows.length===0){
-      const recent=await db.collection("submissions").limit(150).get();
+      const recent=await db.collection("submissions").limit(200).get();
       const target=normalizeStoreName(value);
       recent.forEach(doc=>{
         const d=doc.data() || {};
-        if(normalizeStoreName(d.store) === target){
+        if(
+          normalizeStoreName(d.store) === target &&
+          String(d.region || "") === selectedRegion &&
+          String(d.brand || "") === selectedBrand
+        ){
           rows.push({id:doc.id, ...d});
         }
       });
@@ -683,7 +697,7 @@ async function loadStoreHistoryFromFirebase(){
     });
 
     if(rows.length===0){
-      box.innerHTML="<b>이전 특이사항 없음</b><br>이 점포명으로 저장된 이전 특이사항을 찾지 못했습니다.";
+      box.innerHTML="<b>이전 특이사항 없음</b><br>점포명/지역/브랜드가 모두 일치하는 이전 특이사항을 찾지 못했습니다.";
       return;
     }
 
@@ -697,7 +711,7 @@ async function loadStoreHistoryFromFirebase(){
       return "<div class='history-item'><b>"+escText(dateText)+"</b>"+people+count+duration+"<br>특이사항: "+escText(noteText || "없음")+"</div>";
     }).join("");
 
-    box.innerHTML="<b>이전 특이사항 "+rows.length+"건 발견</b><br>최근 5건까지 표시합니다."+html;
+    box.innerHTML="<b>이전 특이사항 "+rows.length+"건 발견</b><br>조건: "+escText(value)+" / "+escText(selectedRegion)+" / "+escText(selectedBrand)+"<br>최근 5건까지 표시합니다."+html;
 
   }catch(err){
     console.error(err);
