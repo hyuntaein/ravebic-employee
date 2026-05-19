@@ -453,6 +453,7 @@ const storage = firebase.storage();
 <script>
 let rememberName=false;
 let selected={region:"",brand:"",workType:""};
+let selectedFiles=[];
 
 const storeHistory={
   "이마트24 강남점":["입점 전 점주 통화 필수","냉장 재고 사진 중요","마스터사장님 매가 기재 요청"],
@@ -509,18 +510,35 @@ document.getElementById("store").addEventListener("input",function(){
   }
 });
 
-function addFiles(fileList){
-  const list=document.getElementById("fileList");
-  Array.from(fileList).forEach(file=>{
-    const div=document.createElement("div");
-    div.className="file-item";
-    div.innerHTML="<span>첨부됨: "+file.name+"</span><button onclick='this.parentElement.remove()'>삭제</button>";
-    list.appendChild(div);
-  });
+function escText(v){
+  return String(v||"").replace(/[&<>"']/g, s=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[s]));
 }
 
-document.getElementById("fileInput").addEventListener("change",e=>addFiles(e.target.files));
-document.getElementById("cameraInput").addEventListener("change",e=>addFiles(e.target.files));
+function renderFileList(){
+  const list=document.getElementById("fileList");
+  if(selectedFiles.length===0){
+    list.innerHTML="";
+    return;
+  }
+  list.innerHTML=selectedFiles.map((file,idx)=>
+    "<div class='file-item'><span>첨부됨: "+escText(file.name)+"</span><button type='button' onclick='removeSelectedFile("+idx+")'>삭제</button></div>"
+  ).join("");
+}
+
+function addFiles(fileList){
+  Array.from(fileList || []).forEach(file=>{
+    selectedFiles.push(file);
+  });
+  renderFileList();
+}
+
+function removeSelectedFile(index){
+  selectedFiles.splice(index,1);
+  renderFileList();
+}
+
+document.getElementById("fileInput").addEventListener("change",e=>{addFiles(e.target.files); e.target.value="";});
+document.getElementById("cameraInput").addEventListener("change",e=>{addFiles(e.target.files); e.target.value="";});
 
 function openScheduleModal(){document.getElementById("scheduleModal").style.display="flex";}
 function closeScheduleModal(){document.getElementById("scheduleModal").style.display="none";}
@@ -649,6 +667,29 @@ async function verifyRegisteredStaffName(name){
   return true;
 }
 
+function safeFileName(name){
+  return String(name || "file").replace(/[\\/:*?"<>|#%&{}$!'`@+=]/g,"_").replace(/\s+/g,"_");
+}
+
+async function uploadSelectedFiles(docId){
+  const uploaded=[];
+  for(let i=0;i<selectedFiles.length;i++){
+    const file=selectedFiles[i];
+    const path="submissions/"+docId+"/"+String(i+1).padStart(2,"0")+"_"+safeFileName(file.name);
+    const ref=storage.ref().child(path);
+    await ref.put(file);
+    const url=await ref.getDownloadURL();
+    uploaded.push({
+      name:file.name,
+      size:file.size,
+      type:file.type || "",
+      path:path,
+      url:url
+    });
+  }
+  return uploaded;
+}
+
 async function submitForm(){
   const name=document.getElementById("name").value.trim();
   const date=document.getElementById("date").value;
@@ -664,22 +705,49 @@ async function submitForm(){
   if(!selected.region)return alert("지역을 선택해주세요.");
   if(!selected.brand)return alert("브랜드를 선택해주세요.");
   if(!selected.workType)return alert("업무유형을 선택해주세요.");
-  if(document.querySelectorAll(".file-item").length === 0){
+  if(selectedFiles.length === 0){
     return alert("사진찍기 또는 서류올리기 중 하나 이상 첨부해야 제출할 수 있습니다.");
   }
 
-  const record={
-    name,date,store,note,
-    region:selected.region,
-    brand:selected.brand,
-    workType:selected.workType,
-    submittedAt:new Date().toISOString()
-  };
-  saveSubmission(record);
-
   const result=document.getElementById("result");
   result.style.display="block";
-  result.innerHTML="<b>제출 테스트 완료</b><br>직원명: "+name+"<br>날짜: "+date+"<br>점포명: "+store+"<br>지역: "+selected.region+"<br>브랜드: "+selected.brand+"<br>업무유형: "+selected.workType+"<br>특이사항: "+(note||"없음")+"<br>첨부파일: "+document.querySelectorAll(".file-item").length+"개<br>서버 실제 제출시간 예시: "+new Date().toLocaleString();
+  result.innerHTML="<b>제출 중입니다...</b><br>첨부파일을 서버에 업로드하고 있습니다.";
+
+  try{
+    const docRef = db.collection("submissions").doc();
+    const uploadedFiles = await uploadSelectedFiles(docRef.id);
+
+    const record={
+      name,date,store,note,
+      region:selected.region,
+      brand:selected.brand,
+      workType:selected.workType,
+      files: uploadedFiles,
+      status:"미확인",
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      submittedAtText: new Date().toISOString()
+    };
+
+    await docRef.set(record);
+
+    saveSubmission({
+      name,date,store,note,
+      region:selected.region,
+      brand:selected.brand,
+      workType:selected.workType,
+      files: uploadedFiles.map(f=>({name:f.name,url:f.url})),
+      submittedAt:new Date().toISOString()
+    });
+
+    result.innerHTML="<b>제출 완료</b><br>직원명: "+escText(name)+"<br>날짜: "+escText(date)+"<br>점포명: "+escText(store)+"<br>지역: "+escText(selected.region)+"<br>브랜드: "+escText(selected.brand)+"<br>업무유형: "+escText(selected.workType)+"<br>특이사항: "+escText(note||"없음")+"<br>첨부파일: "+uploadedFiles.length+"개<br>서버 제출시간: "+new Date().toLocaleString();
+
+    selectedFiles=[];
+    renderFileList();
+  }catch(err){
+    console.error(err);
+    result.innerHTML="<b>제출 실패</b><br>Firebase 저장 또는 파일 업로드에 실패했습니다.<br>"+escText(err.message || err);
+    alert("제출 실패:\n\n" + (err.message || err));
+  }
 }
 </script>
 </body>
