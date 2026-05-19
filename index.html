@@ -336,6 +336,16 @@ body{
   .cat-options{gap:10px}
   .option{font-size:13px;min-width:68px}
 }
+
+/* RAVEBIC_CORRECTION_INBOX_V1 */
+.correction-panel{display:none;border:2px solid #fecaca;background:#fff7f7;border-radius:18px;padding:14px;margin:0 0 20px;font-size:14px;line-height:1.55}
+.correction-panel .history-title{color:#991b1b;font-size:16px}
+.correction-item{background:#fff;border:1px solid #fecaca;border-radius:14px;padding:12px;margin-top:10px}
+.correction-msg{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px;margin:8px 0;color:#7c2d12}
+.correction-upload{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.correction-upload input{display:block;width:100%;max-width:260px}
+.correction-upload button{border:none;background:#ef4444;color:#fff;border-radius:10px;padding:10px 12px;font-weight:900;cursor:pointer}
+.correction-done{background:#ecfdf5;border-color:#86efac;color:#166534}
 </style>
 </head>
 <body>
@@ -357,9 +367,11 @@ body{
   <div class="lookup-row">
     <button class="lookup-btn" onclick="showMySubmissions()">내 제출내역 보기</button>
     <button class="lookup-btn" onclick="hideMySubmissions()">제출내역 닫기</button>
+    <button class="lookup-btn" onclick="showCorrectionRequests()">보완요청함 확인</button>
   </div>
 
   <div id="myHistoryPanel" class="my-history"></div>
+  <div id="correctionPanel" class="correction-panel"></div>
 
   <div class="row">
     <div class="field">점포명:<input id="store" placeholder="직접 입력"></div>
@@ -643,6 +655,102 @@ function hideMySubmissions(){
   document.getElementById("myHistoryPanel").style.display="none";
 }
 
+
+
+async function showCorrectionRequests(){
+  const name=document.getElementById("name").value.trim();
+  const panel=document.getElementById("correctionPanel");
+  if(!name){alert("먼저 이름을 입력해주세요.");return;}
+
+  const isRegisteredStaff = await verifyRegisteredStaffName(name);
+  if(!isRegisteredStaff) return;
+
+  panel.style.display="block";
+  panel.innerHTML="<div class='history-title'>보완요청함</div>불러오는 중입니다...";
+
+  try{
+    const snap = await db.collection("submissions").where("name","==",name).get();
+    const rows=[];
+    snap.forEach(doc=>{
+      const d=doc.data() || {};
+      if((d.status||"")==="보완요청" && d.correctionResolved !== true){
+        rows.push({id:doc.id,...d});
+      }
+    });
+    rows.sort((a,b)=>new Date(b.correctionRequestedAtText||b.submittedAtText||0)-new Date(a.correctionRequestedAtText||a.submittedAtText||0));
+
+    if(rows.length===0){
+      panel.innerHTML="<div class='history-title'>보완요청함</div>현재 보완요청이 없습니다.";
+      return;
+    }
+
+    panel.innerHTML="<div class='history-title'>보완요청함 ("+rows.length+"건)</div>"+
+      rows.map(r=>{
+        const reqTime = r.correctionRequestedAt && r.correctionRequestedAt.toDate ? r.correctionRequestedAt.toDate().toLocaleString() : (r.correctionRequestedAtText ? new Date(r.correctionRequestedAtText).toLocaleString() : "-");
+        return "<div class='correction-item' id='correction_"+escText(r.id)+"'>"+
+          "<b>"+escText(r.store||"점포명 없음")+"</b><br>"+
+          "요청시간: "+escText(reqTime)+"<br>"+
+          "구분: "+escText((r.region||"")+" / "+(r.brand||"")+" / "+(r.workType||""))+"<br>"+
+          "<div class='correction-msg'>"+escText(r.correctionMessage||"보완서류가 필요합니다.")+"</div>"+
+          "<div class='correction-upload'>"+
+          "<input id='correctionFile_"+escText(r.id)+"' type='file' multiple>"+
+          "<button type='button' onclick=\"submitCorrectionFiles('"+escText(r.id)+"')\">보완서류 제출</button>"+
+          "</div>"+
+          "</div>";
+      }).join("");
+
+    for(const r of rows){
+      if(r.correctionRead !== true){
+        db.collection("submissions").doc(r.id).update({correctionRead:true}).catch(()=>{});
+      }
+    }
+  }catch(err){
+    panel.innerHTML="<div class='history-title'>보완요청함</div>불러오기 실패: "+escText(err.message || err);
+  }
+}
+
+async function submitCorrectionFiles(docId){
+  const input=document.getElementById("correctionFile_"+docId);
+  if(!input || !input.files || input.files.length===0){
+    alert("보완으로 제출할 파일을 선택해주세요.");
+    return;
+  }
+  const box=document.getElementById("correction_"+docId);
+  const files=Array.from(input.files);
+  if(box){ box.insertAdjacentHTML('beforeend', "<div class='correction-msg'>보완서류 업로드 중입니다...</div>"); }
+
+  try{
+    const uploaded=[];
+    for(let i=0;i<files.length;i++){
+      const file=files[i];
+      const path="submissions/"+docId+"/corrections/"+Date.now()+"_"+String(i+1).padStart(2,"0")+"_"+safeFileName(file.name);
+      const ref=storage.ref().child(path);
+      await ref.put(file);
+      const url=await ref.getDownloadURL();
+      uploaded.push({name:file.name,size:file.size,type:file.type||"",path:path,url:url,uploadedAt:new Date().toISOString()});
+    }
+
+    const docRef=db.collection("submissions").doc(docId);
+    await docRef.update({
+      correctionFiles: firebase.firestore.FieldValue.arrayUnion(...uploaded),
+      files: firebase.firestore.FieldValue.arrayUnion(...uploaded),
+      status:"미확인",
+      correctionSubmittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      correctionSubmittedAtText: new Date().toISOString(),
+      correctionResolved:false,
+      statusUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    alert("보완서류 제출이 완료되었습니다.");
+    showCorrectionRequests();
+  }catch(err){
+    alert("보완서류 제출 실패:\n\n"+(err.message || err));
+  }
+}
+
+function hideCorrectionRequests(){
+  document.getElementById("correctionPanel").style.display="none";
+}
 
 async function verifyRegisteredStaffName(name){
   if(typeof db === "undefined"){
