@@ -186,6 +186,38 @@ body{
   font-weight:900;
   margin:8px 0 8px;
 }
+
+.note-detail-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
+  margin-bottom:12px;
+}
+.note-detail-field{
+  font-size:14px;
+  font-weight:900;
+  color:#111827;
+}
+.note-detail-field input{
+  width:100%;
+  border:1px solid #d6d3c2;
+  border-radius:14px;
+  outline:none;
+  background:#fffefb;
+  margin-top:6px;
+  padding:11px;
+  font-size:15px;
+}
+.note-guide{
+  font-size:13px;
+  color:#64748b;
+  margin:0 0 8px;
+  line-height:1.45;
+}
+@media(max-width:700px){
+  .note-detail-grid{grid-template-columns:1fr;gap:9px}
+}
+
 .note-box{
   border:1px solid #d1d5db;
   border-radius:24px;
@@ -425,7 +457,19 @@ body{
 
   <div class="note-title">점포특이사항 기재:</div>
   <div class="note-box">
-    <textarea id="note" placeholder="점포특이사항을 입력해주세요.&#10;&#10;(필수: 세븐 인수실사시 마스터사용 점포명/매가 기재)"></textarea>
+    <div class="note-detail-grid">
+      <label class="note-detail-field">인원이름
+        <input id="workerNames" placeholder="예: 인현태, 김철수">
+      </label>
+      <label class="note-detail-field">건수
+        <input id="workCount" type="number" inputmode="numeric" min="0" placeholder="예: 154">
+      </label>
+      <label class="note-detail-field">걸린시간
+        <input id="workDuration" placeholder="예: 3시간 20분">
+      </label>
+    </div>
+    <div class="note-guide">아래에는 점포 특이사항을 적어주세요. 제출하면 관리자 화면에는 인원이름/건수/걸린시간/특이사항이 함께 정리되어 표시됩니다.</div>
+    <textarea id="note" placeholder="특이사항기재:\n\n예: 냉장 재고 사진 추가 필요 / 담배장 재확인 필요\n\n(필수: 세븐 인수실사시 마스터사용 점포명/매가 기재)"></textarea>
     <div id="historyBox" class="store-history">점포명을 입력하면 이전 특이사항이 표시됩니다.</div>
   </div>
 
@@ -859,7 +903,11 @@ async function submitForm(){
   const name=document.getElementById("name").value.trim();
   const date=document.getElementById("date").value;
   const store=document.getElementById("store").value.trim();
-  const note=document.getElementById("note").value.trim();
+  const workerNames=document.getElementById("workerNames").value.trim();
+  const workCount=document.getElementById("workCount").value.trim();
+  const workDuration=document.getElementById("workDuration").value.trim();
+  const noteDetail=document.getElementById("note").value.trim();
+  const note="인원이름: "+(workerNames||"-")+"\n건수: "+(workCount?workCount+"건":"-")+"\n걸린시간: "+(workDuration||"-")+"\n특이사항기재: "+(noteDetail||"-");
 
   if(!name)return alert("이름을 입력해주세요.");
 
@@ -867,6 +915,9 @@ async function submitForm(){
   if(!isRegisteredStaff) return;
   if(!date)return alert("날짜를 입력해주세요.");
   if(!store)return alert("점포명을 입력해주세요.");
+  if(!workerNames)return alert("인원이름을 입력해주세요.");
+  if(!workCount)return alert("건수를 입력해주세요.");
+  if(!workDuration)return alert("걸린시간을 입력해주세요.");
   if(!selected.region)return alert("지역을 선택해주세요.");
   if(!selected.brand)return alert("브랜드를 선택해주세요.");
   if(!selected.workType)return alert("업무유형을 선택해주세요.");
@@ -884,6 +935,10 @@ async function submitForm(){
 
     const record={
       name,date,store,note,
+      workerNames: workerNames,
+      workCount: workCount,
+      workDuration: workDuration,
+      noteDetail: noteDetail,
       region:selected.region,
       brand:selected.brand,
       workType:selected.workType,
@@ -897,6 +952,10 @@ async function submitForm(){
 
     saveSubmission({
       name,date,store,note,
+      workerNames: workerNames,
+      workCount: workCount,
+      workDuration: workDuration,
+      noteDetail: noteDetail,
       region:selected.region,
       brand:selected.brand,
       workType:selected.workType,
@@ -904,8 +963,12 @@ async function submitForm(){
       submittedAt:new Date().toISOString()
     });
 
-    result.innerHTML="<b>제출 완료</b><br>직원명: "+escText(name)+"<br>날짜: "+escText(date)+"<br>점포명: "+escText(store)+"<br>지역: "+escText(selected.region)+"<br>브랜드: "+escText(selected.brand)+"<br>업무유형: "+escText(selected.workType)+"<br>특이사항: "+escText(note||"없음")+"<br>첨부파일: "+uploadedFiles.length+"개<br>서버 제출시간: "+new Date().toLocaleString();
+    result.innerHTML="<b>제출 완료</b><br>직원명: "+escText(name)+"<br>날짜: "+escText(date)+"<br>점포명: "+escText(store)+"<br>지역: "+escText(selected.region)+"<br>브랜드: "+escText(selected.brand)+"<br>업무유형: "+escText(selected.workType)+"<br>인원이름: "+escText(workerNames)+"<br>건수: "+escText(workCount)+"건<br>걸린시간: "+escText(workDuration)+"<br>특이사항: "+escText(noteDetail||"없음")+"<br>첨부파일: "+uploadedFiles.length+"개<br>서버 제출시간: "+new Date().toLocaleString();
 
+    document.getElementById("workerNames").value="";
+    document.getElementById("workCount").value="";
+    document.getElementById("workDuration").value="";
+    document.getElementById("note").value="";
     selectedFiles=[];
     renderFileList();
   }catch(err){
