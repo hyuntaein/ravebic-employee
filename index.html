@@ -1,770 +1,1015 @@
-<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>RAVEBIC 관리자 최종 수정본 일정표 직접열기</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAVEBIC 개인비서 V5</title>
 <style>
-*{box-sizing:border-box}body{margin:0;padding:18px;background:#f4f7fb;font-family:Arial,'Malgun Gothic',sans-serif;color:#10213f}.wrap{max-width:1180px;margin:0 auto;background:white;border:1px solid #cfe0f8;border-radius:24px;padding:22px;box-shadow:0 8px 24px rgba(15,23,42,.06)}h1{margin:0;color:#123f7a}.sub{color:#64748b;margin:6px 0 14px}.badge{display:inline-block;padding:10px 14px;border:1px solid #b8d3fb;background:#eef6ff;border-radius:14px;font-weight:900;color:#123f7a}.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:18px 0}.card{border:1px solid #ead8a8;background:#fffdf5;border-radius:16px;padding:14px}.num{font-size:24px;font-weight:900;color:#0b3b77}.filters{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr 1fr;gap:10px;padding:14px;border:1px solid #d7e6fb;background:#f8fbff;border-radius:18px}input,select{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:12px;font-size:14px}button{border:0;border-radius:12px;padding:12px 16px;font-weight:900;cursor:pointer}.blue{background:#2563eb;color:white}.green{background:#16a34a;color:white}.gray{background:#e5e7eb}.red{background:#b03a3a;color:white}.btns{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap}table{width:100%;border-collapse:collapse;font-size:14px}th,td{border-bottom:1px solid #e2e8f0;padding:10px;text-align:left;vertical-align:top}th{background:#eaf4ff;color:#0b3b77}.filelink{display:inline-block;margin:2px 0;color:#2563eb}.small{font-size:12px;color:#64748b}.section{margin-top:34px;padding-top:28px;border-top:3px solid #e5eefb}.section h2{margin:0 0 8px;color:#123f7a}.notice{font-size:13px;color:#555;line-height:1.55;margin:8px 0 16px}.tool-grid{display:grid;grid-template-columns:1fr;gap:22px}.tool-card{border:1px solid #d7e6fb;background:#fbfdff;border-radius:20px;padding:18px}.drop{border:3px dashed #7b8794;border-radius:18px;background:#fff;min-height:130px;display:flex;align-items:center;justify-content:center;text-align:center;margin:14px 0;padding:18px;transition:.15s}.drop.drag{background:#eef6ff;border-color:#1464c8}.drop p{font-size:16px;line-height:1.55;margin:0 0 8px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0 18px}.box{background:#fffdf5;border:1px solid #ead8a8;border-radius:12px;padding:13px;text-align:center}.box b{display:block;font-size:22px;margin-top:4px}.smallbtn{padding:7px 11px;border-radius:8px;font-size:13px;background:#777;color:white}.err{color:#b00020;font-size:13px}td.store{text-align:left;font-weight:700}.analyzer-table th,.analyzer-table td{text-align:center;border:1px solid #d7d7d7}.analyzer-table th{background:#eef0f2;color:#111}.analyzer-table td.store{text-align:left}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.tab{background:#e5e7eb;color:#111}.tab.active{background:#2563eb;color:#fff}.hidden{display:none}@media(max-width:800px){body{padding:8px}.wrap{padding:16px;border-radius:18px}.cards{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}table{font-size:12px}.summary{grid-template-columns:repeat(2,1fr)}th:nth-child(4),td:nth-child(4),th:nth-child(5),td:nth-child(5){display:none}}
-
-/* RAVEBIC_STATUS_COLOR_V2 */
-.status-cell select {
-  font-weight:900 !important;
-  border-radius:12px !important;
+*{box-sizing:border-box}
+body{
+  margin:0;
+  padding:18px;
+  background:#f4f7fb;
+  font-family:Arial,"Malgun Gothic",sans-serif;
+  color:#111827;
 }
-tr.status-row-done {
-  background:#ecfdf5 !important;
+.page{
+  max-width:780px;
+  margin:0 auto;
+  background:#fff;
+  border:1px solid #d6e2f2;
+  border-radius:28px;
+  padding:22px 20px 26px;
+  box-shadow:0 8px 24px rgba(15,23,42,.08);
 }
-tr.status-row-fix {
-  background:#fef2f2 !important;
+.title-wrap{
+  margin-bottom:22px;
 }
-tr.status-row-pending {
-  background:#fffbeb !important;
-}
-select.status-done {
-  background:#dcfce7 !important;
-  color:#166534 !important;
-  border:1px solid #22c55e !important;
-}
-select.status-fix {
-  background:#fee2e2 !important;
-  color:#991b1b !important;
-  border:1px solid #ef4444 !important;
-}
-select.status-pending {
-  background:#fef9c3 !important;
-  color:#713f12 !important;
-  border:1px solid #facc15 !important;
-}
-
-
-/* RAVEBIC_ADMIN_LOGIN_SAFE_98765 */
-#adminLockScreen{
-  position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);
-  z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;
-}
-.admin-lock-card{width:100%;max-width:420px;background:#fff;border-radius:24px;padding:30px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center}
-.admin-lock-card h2{margin:0 0 8px;color:#0b3b78;font-size:32px;font-weight:900}
-.admin-lock-card p{margin:0 0 18px;color:#64748b;font-size:14px}
-.admin-lock-card input{width:100%;box-sizing:border-box;padding:15px;border:1px solid #cbd5e1;border-radius:14px;font-size:18px;margin-bottom:12px;outline:none}
-.admin-lock-card button{width:100%;padding:15px;border:none;border-radius:14px;background:#2563eb;color:white;font-size:18px;font-weight:900;cursor:pointer}
-#adminLockError{display:none;margin-top:12px;padding:10px;background:#fee2e2;color:#991b1b;border-radius:12px;font-weight:800}
-.admin-logout-btn{margin:10px 0 4px;padding:10px 14px;border:none;border-radius:12px;background:#ef4444;color:#fff;font-weight:900;cursor:pointer}
-
-
-/* RAVEBIC_STAFF_PIN_SAFE_V2 */
-.pin-manager{margin-top:34px;padding-top:28px;border-top:3px solid #e5eefb}
-.pin-manager h2{margin:0 0 8px;color:#123f7a}
-.pin-form{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;margin:14px 0;align-items:center}
-.pin-table{width:100%;border-collapse:collapse;margin-top:12px}
-.pin-table th,.pin-table td{border-bottom:1px solid #e2e8f0;padding:10px;text-align:left}
-.pin-table th{background:#eaf4ff;color:#0b3b77}
-.pin-del{background:#ef4444;color:#fff;padding:8px 12px;border-radius:10px}
-.pin-save{background:#2563eb;color:#fff;padding:12px 16px}
-.pin-seed{background:#16a34a;color:#fff;padding:12px 16px}
-@media(max-width:800px){.pin-form{grid-template-columns:1fr}}
-
-
-/* RAVEBIC_STAFF_PIN_TOGGLE_BUTTON_V1 */
-.pin-list-hidden{
-  display:none !important;
-}
-.pin-toggle-btn{
-  background:#64748b;
-  color:white;
-  padding:12px 16px;
-  border-radius:12px;
+.title-box{
+  width:100%;
+  border:1px solid #9fc3ff;
+  border-radius:22px;
+  padding:22px 12px;
+  text-align:center;
+  font-size:34px;
   font-weight:900;
+  letter-spacing:.5px;
+  color:#153b73;
+  background:#eaf4ff;
 }
-
-
-/* RAVEBIC_STAFF_PIN_INLINE_TOGGLE_V2 */
-.pin-list-hidden{
-  display:none !important;
+.row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  margin-bottom:14px;
 }
-.pin-toggle-btn{
-  background:#64748b !important;
-  color:white !important;
-  padding:12px 16px !important;
-  border-radius:12px !important;
-  font-weight:900 !important;
-  cursor:pointer !important;
-  border:0 !important;
+.field{
+  border:1px solid #d1d5db;
+  border-radius:22px;
+  min-height:76px;
+  padding:14px 16px;
+  font-size:17px;
+  font-weight:800;
+  background:#fffdf5;
 }
-
-
-/* RAVEBIC_STAFF_PIN_DIRECT_TOGGLE_V3 */
-.pin-toggle-btn{
-  background:#64748b !important;
-  color:white !important;
-  padding:12px 16px !important;
-  border-radius:12px !important;
-  font-weight:900 !important;
-  cursor:pointer !important;
-  border:0 !important;
+.field input{
+  display:block;
+  width:100%;
+  border:1px solid #d6d3c2;
+  border-radius:14px;
+  outline:none;
+  background:#fffefb;
+  margin-top:8px;
+  padding:12px;
+  font-size:16px;
 }
-
-
-.pagination-bar{
+.fixed-line{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:4px 0 18px 4px;
+  font-size:16px;
+  cursor:pointer;
+  user-select:none;
+}
+.round-check{
+  width:23px;
+  height:23px;
+  border:2px solid #a8b5c7;
+  border-radius:8px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:#fff;
+  cursor:pointer;
+  transition:.18s;
+  flex-shrink:0;
+}
+.round-check.active{
+  background:#60a5fa;
+  border-color:#2563eb;
+  box-shadow:0 0 0 4px rgba(96,165,250,.18);
+}
+.round-check.active::after{
+  content:"✓";
+  color:#fff;
+  font-weight:900;
+  font-size:14px;
+}
+.lookup-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin:8px 0 20px;
+}
+.lookup-btn{
+  border:1px solid #c6d6ee;
+  border-radius:18px;
+  background:#f8fbff;
+  min-height:50px;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+  color:#143d7a;
+}
+.my-history{
+  display:none;
+  border:1px solid #c6d6ee;
+  border-radius:18px;
+  background:#f8fbff;
+  padding:14px;
+  margin-bottom:20px;
+  font-size:14px;
+  line-height:1.55;
+}
+.history-title{
+  font-weight:900;
+  margin-bottom:8px;
+}
+.history-item{
+  background:#fff;
+  border:1px solid #dbe5f2;
+  border-radius:14px;
+  padding:10px;
+  margin-top:8px;
+}
+.schedule{
+  border:1px solid #d1d5db;
+  border-radius:22px;
+  min-height:76px;
+  padding:14px 16px;
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:10px;
-  margin:16px 0 4px;
+  font-size:20px;
+  font-weight:900;
+  cursor:pointer;
+  background:#fff;
+}
+.category-area{
+  margin:22px 0 24px;
+  padding:18px 14px;
+  border:1px solid #e0e7f2;
+  border-radius:24px;
+  background:#ffffff;
+}
+.cat-row{
+  display:grid;
+  grid-template-columns:80px 1fr;
+  align-items:center;
+  margin-bottom:15px;
+}
+.cat-row:last-child{margin-bottom:0}
+.cat-title{
+  font-weight:900;
+  font-size:15px;
+  color:#111827;
+}
+.cat-options{
+  display:flex;
+  align-items:center;
+  gap:14px;
   flex-wrap:wrap;
 }
-.pagination-bar button{
-  background:#2563eb;
-  color:#fff;
-  padding:10px 16px;
-  border-radius:12px;
-  font-weight:900;
+.option{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  cursor:pointer;
+  user-select:none;
+  font-size:14px;
+  min-width:78px;
 }
-.pagination-bar button:disabled{
-  background:#cbd5e1;
+.option .label{white-space:nowrap}
+.note-title{
+  font-size:19px;
+  font-weight:900;
+  margin:8px 0 8px;
+}
+
+.note-detail-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
+  margin-bottom:12px;
+}
+.note-detail-field{
+  font-size:14px;
+  font-weight:900;
+  color:#111827;
+}
+.note-detail-field input{
+  width:100%;
+  border:1px solid #d6d3c2;
+  border-radius:14px;
+  outline:none;
+  background:#fffefb;
+  margin-top:6px;
+  padding:11px;
+  font-size:15px;
+}
+.note-guide{
+  font-size:13px;
   color:#64748b;
-  cursor:not-allowed;
+  margin:0 0 8px;
+  line-height:1.45;
 }
-.pagination-info{
+@media(max-width:700px){
+  .note-detail-grid{grid-template-columns:1fr;gap:9px}
+}
+
+.note-box{
+  border:1px solid #d1d5db;
+  border-radius:24px;
+  min-height:165px;
+  padding:16px;
+  margin-bottom:24px;
+  background:#fffdf5;
+}
+.note-box textarea{
+  width:100%;
+  min-height:82px;
+  border:1px solid #d6d3c2;
+  border-radius:16px;
+  outline:none;
+  resize:vertical;
+  font-size:16px;
+  padding:12px;
+  background:#fffefb;
+}
+.store-history{
+  margin-top:10px;
+  padding:10px;
+  border:1px solid #dbe5f2;
+  border-radius:14px;
+  background:#f8fbff;
+  font-size:14px;
+  color:#334155;
+  line-height:1.55;
+}
+.upload-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  margin-bottom:8px;
+}
+.upload-box{
+  border:1px solid #c6d6ee;
+  border-radius:22px;
+  min-height:82px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
   font-weight:900;
-  color:#123f7a;
-  padding:8px 12px;
+  cursor:pointer;
+  background:#fff;
 }
-.page-size-select{
-  width:auto;
-  min-width:90px;
+.upload-box.upload{background:#f3fff6;color:#136f35}
+.upload-box.camera{background:#f2f7ff;color:#1d4ed8}
+.upload-help{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  font-size:13px;
+  color:#64748b;
+  text-align:center;
+  margin-bottom:14px;
+}
+.file-list{margin:8px 0 18px}
+.file-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  padding:9px 11px;
+  margin-top:7px;
+  border:1px solid #dbe5f2;
+  background:#f8fbff;
+  border-radius:14px;
+  font-size:14px;
+}
+.file-item button{
+  border:none;
+  background:#e5e7eb;
+  border-radius:8px;
+  padding:6px 9px;
+  cursor:pointer;
 }
 
+.no-doc-line{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:10px 0 18px 4px;
+  font-size:16px;
+  font-weight:800;
+  cursor:pointer;
+  user-select:none;
+  color:#111827;
+}
+.no-doc-line .round-check{
+  width:24px;
+  height:24px;
+}
 
-/* RAVEBIC_FILE_DELETE_V1 */
-.file-actions{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 8px}
-.file-delete-btn{background:#ef4444;color:#fff;padding:6px 9px;border-radius:8px;font-size:12px}
-.file-view-btn{display:inline-block;background:#eaf4ff;color:#2563eb;padding:6px 9px;border-radius:8px;font-size:12px;text-decoration:none;font-weight:900}
-.row-delete-btn{background:#b91c1c;color:#fff;padding:8px 10px;border-radius:10px;font-size:12px}
+.submit-btn{
+  width:100%;
+  min-height:66px;
+  border:none;
+  border-radius:22px;
+  background:#2563eb;
+  color:white;
+  font-size:25px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 7px 16px rgba(37,99,235,.24);
+}
+.lookup-btn:hover,.schedule:hover,.upload-box:hover{
+  filter:brightness(.98);
+}
+.submit-btn:hover{background:#1d4ed8}
+.result{
+  display:none;
+  margin-top:14px;
+  padding:13px;
+  border:1px solid #16a34a;
+  border-radius:16px;
+  background:#dcfce7;
+  font-size:15px;
+  line-height:1.65;
+}
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:99;
+}
+.modal-card{
+  width:100%;
+  max-width:420px;
+  background:white;
+  border-radius:18px;
+  padding:22px;
+}
+.modal-card h3{margin-top:0}
+.modal-card input{
+  width:100%;
+  padding:13px;
+  border:1px solid #cbd5e1;
+  border-radius:12px;
+  margin-bottom:10px;
+  font-size:16px;
+}
+.modal-card button{
+  width:100%;
+  padding:13px;
+  margin-top:8px;
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:900;
+}
+.primary{background:#111827;color:white}
+.secondary{background:#e5e7eb;color:#111827}
+@media(max-width:700px){
+  body{padding:8px}
+  .page{padding:14px 12px 20px;border-radius:22px}
+  .title-box{font-size:27px;padding:20px 8px}
+  .row,.upload-row,.upload-help,.lookup-row{grid-template-columns:1fr;gap:12px}
+  .cat-row{grid-template-columns:62px 1fr;margin-bottom:13px}
+  .cat-options{gap:10px}
+  .option{font-size:13px;min-width:68px}
+}
 
-/* RAVEBIC_CORRECTION_REQUEST_MODAL_V1 */
-.correction-modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:999998;align-items:center;justify-content:center;padding:18px}
-.correction-card{width:100%;max-width:520px;background:#fff;border-radius:20px;padding:22px;box-shadow:0 18px 55px rgba(0,0,0,.28)}
-.correction-card h3{margin:0 0 10px;color:#991b1b;font-size:22px;font-weight:900}
-.correction-info{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:12px;margin-bottom:12px;line-height:1.55;font-size:14px}
-.correction-card textarea{width:100%;min-height:135px;border:1px solid #cbd5e1;border-radius:14px;padding:13px;font-size:15px;resize:vertical;outline:none}
-.correction-actions{display:flex;gap:10px;margin-top:12px;justify-content:flex-end;flex-wrap:wrap}
-.correction-send{background:#ef4444;color:#fff}.correction-cancel{background:#e5e7eb;color:#111827}
-.correction-message-preview{font-size:12px;color:#991b1b;margin-top:6px;line-height:1.4}
-</style></head><body style="overflow:hidden;">
-<div id="adminLockScreen">
-  <div class="admin-lock-card">
-    <h2>RAVEBIC 관리자</h2>
-    <p>관리자 비밀번호를 입력하세요.</p>
-    <input id="adminPasswordInput" type="password" placeholder="관리자 비밀번호" autocomplete="off">
-    <button id="adminLoginBtn" type="button">관리자 로그인</button>
-    <div id="adminLockError">비밀번호가 맞지 않습니다.</div>
+/* RAVEBIC_CORRECTION_INBOX_V1 */
+.correction-panel{display:none;border:2px solid #fecaca;background:#fff7f7;border-radius:18px;padding:14px;margin:0 0 20px;font-size:14px;line-height:1.55}
+.correction-panel .history-title{color:#991b1b;font-size:16px}
+.correction-item{background:#fff;border:1px solid #fecaca;border-radius:14px;padding:12px;margin-top:10px}
+.correction-msg{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px;margin:8px 0;color:#7c2d12}
+.correction-upload{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.correction-upload input{display:block;width:100%;max-width:260px}
+.correction-upload button{border:none;background:#ef4444;color:#fff;border-radius:10px;padding:10px 12px;font-weight:900;cursor:pointer}
+.correction-done{background:#ecfdf5;border-color:#86efac;color:#166534}
+
+/* RAVEBIC_CORRECTION_RED_ALERT_V2 */
+#correctionAlertBtn.correction-alert-active{
+  background:#ef4444 !important;
+  color:#fff !important;
+  border:1px solid #dc2626 !important;
+  box-shadow:0 0 0 4px rgba(239,68,68,.14), 0 8px 18px rgba(239,68,68,.22) !important;
+  animation:ravebicAlertPulse 1.2s infinite;
+}
+@keyframes ravebicAlertPulse{
+  0%{transform:scale(1)}
+  50%{transform:scale(1.015)}
+  100%{transform:scale(1)}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="title-wrap">
+    <div class="title-box">RAVEBIC 개인비서</div>
   </div>
-</div>
-<div class="wrap"><h1>RAVEBIC 관리자 테스트 V3 - 상태색상 - 일정표 직접열기</h1><button class="admin-logout-btn" type="button" onclick="adminLogout()">관리자 로그아웃</button><div class="sub">Firebase 제출데이터 실시간 조회 / 검색 / CSV 다운로드 / 하단 파일분석 도구</div><div class="badge" id="conn">연결 확인 중...</div>
-<div class="cards"><div class="card">전체 건수<div class="num" id="total">0</div></div><div class="card">오늘 제출<div class="num" id="today">0</div></div><div class="card">미확인<div class="num" id="s0">0</div></div><div class="card">확인완료<div class="num" id="s1">0</div></div><div class="card">보완요청<div class="num" id="s2">0</div></div></div>
-<div class="filters"><input id="q" placeholder="직원명/점포명/특이사항"><input id="from" type="date"><input id="to" type="date"><select id="region"><option value="">지역 전체</option><option>서울경기</option><option>충청도</option><option>경상도</option><option>기타지역</option></select><select id="brand"><option value="">브랜드 전체</option><option>이마트24</option><option>세븐일레븐</option><option>기타</option></select><select id="workType"><option value="">업무 전체</option><option>정기실사</option><option>인수실사</option><option>양수도</option><option>폐점</option></select></div>
-<div class="btns"><button class="blue" onclick="applyFilters()">검색/필터 적용</button><button class="gray" onclick="resetFilters()">초기화</button><button class="green" onclick="downloadCSV()">엑셀용 CSV 다운로드</button><button class="gray" onclick="loadData()">새로고침</button></div>
-<div style="overflow:auto"><table><thead><tr><th>제출시간</th><th>직원명</th><th>점포명</th><th>지역</th><th>브랜드</th><th>업무</th><th>특이사항</th><th>첨부파일</th><th>상태</th><th>관리</th></tr></thead><tbody id="tbody"><tr><td colspan="10" style="text-align:center;padding:35px">불러오는 중...</td></tr></tbody></table></div>
-<div class="pagination-bar"><button id="prevPageBtn" type="button" onclick="prevPage()">이전</button><span id="pageInfo" class="pagination-info">1 / 1 페이지</span><button id="nextPageBtn" type="button" onclick="nextPage()">다음</button><select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)"><option value="10" selected>10개씩</option><option value="20">20개씩</option><option value="50">50개씩</option></select></div>
 
-
-<div class="section">
-
-  <h2>구글 일정 승인 시스템</h2>
-
-  <div class="notice">
-    현재 구글시트의 주황색 탭을 자동으로 읽어옵니다.
+  <div class="row">
+    <div class="field">이름:<input id="name" placeholder="직접 입력"></div>
+    <div class="field">날짜:<input id="date" type="datetime-local"></div>
   </div>
 
-  <div class="btns">
+  <label class="fixed-line" onclick="toggleRemember()">
+    <span id="rememberSquare" class="round-check"></span>
+    고정으로 로그인
+  </label>
 
-    <button class="blue" onclick="loadGoogleSchedule()">
-      구글 일정 불러오기
-    </button>
-
-    <button class="green" onclick="approveGoogleSchedule()">
-      직원용 일정표 승인 반영
-    </button>
-
-    <button class="gray" onclick="downloadGoogleScheduleExcel()">
-      불러온 일정 PDF 다시 열기
-    </button>
-
+  <div class="lookup-row">
+    <button class="lookup-btn" onclick="showMySubmissions()">내 제출내역 보기</button>
+    <button class="lookup-btn" onclick="hideMySubmissions()">제출내역 닫기</button>
+    <button id="correctionAlertBtn" class="lookup-btn" onclick="showCorrectionRequests()">보완요청함 확인</button>
   </div>
 
-  <div id="googleScheduleStatus" class="badge">아직 구글 일정을 불러오지 않았습니다.</div>
-  <div id="lastApprovedInfo" style="margin-top:10px;padding:10px;background:#eef6ff;border:1px solid #b8d3fb;border-radius:12px;font-size:14px;color:#1e3a8a;line-height:1.5;">마지막 승인 정보 없음</div>
+  <div id="myHistoryPanel" class="my-history"></div>
+  <div id="correctionPanel" class="correction-panel"></div>
 
-  
-</div>
-
-
-
-<div class="pin-manager">
-  <h2>직원 PIN 관리</h2>
-  <div class="notice">직원용 일정표는 여기 등록된 직원명/PIN이 맞아야 열립니다. 기본 PIN은 1111로 등록하면 됩니다.</div>
-  <div class="pin-form">
-    <input id="staffNameInput" placeholder="직원명 예: 인현태" value="인현태">
-    <input id="staffPinInput" placeholder="PIN 예: 1111" value="1111">
-    <button class="pin-save" type="button" id="saveStaffPinBtn">직원 추가/수정</button>
-    <button class="gray" type="button" id="refreshStaffPinBtn">목록 새로고침</button><button class="pin-toggle-btn" type="button" onclick="var box=document.getElementById('staffPinListArea'); if(!box){alert('직원 목록 영역을 찾지 못했습니다.');return false;} if(box.style.display==='none'){box.style.display='block';this.innerText='목록 접기';}else{box.style.display='none';this.innerText='목록 펼치기';} return false;">목록 접기</button>
+  <div class="row">
+    <div class="field">점포명:<input id="store" placeholder="직접 입력"></div>
+    <div class="schedule" onclick="openScheduleModal()">일정표</div>
   </div>
-  <div class="small" id="staffPinStatus">직원 PIN 목록을 불러오는 중...</div>
-  <div id="staffPinListArea" style="overflow:auto">
-    <table class="pin-table">
-      <thead><tr><th>직원명</th><th>PIN</th><th>등록/수정일</th><th>관리</th></tr></thead>
-      <tbody id="staffPinTbody"><tr><td colspan="4">불러오는 중...</td></tr></tbody>
-    </table>
-  </div>
-</div>
 
-<div class="section"><h2>업로드 파일 분석 도구</h2><div class="notice">관리자 화면 하단에 추가한 분석 기능입니다. 직원이 올린 파일을 내려받은 뒤, 아래에 다시 끌어다 놓으면 점포별 건수/시간/수량을 별도로 집계할 수 있습니다.</div>
-<div class="tabs"><button class="tab active" id="tabEmart" onclick="showAnalyzer('emart')">이마트24 엑셀 분석</button><button class="tab" id="tabSeven" onclick="showAnalyzer('seven')">세븐일레븐 J파일 분석</button></div>
+  <div class="category-area">
+    <div class="cat-row">
+      <div class="cat-title">지역</div>
+      <div class="cat-options" id="regionGroup">
+        <div class="option" onclick="selectOne('region','서울경기',this)"><span class="round-check"></span><span class="label">서울경기</span></div>
+        <div class="option" onclick="selectOne('region','충청도',this)"><span class="round-check"></span><span class="label">충청도</span></div>
+        <div class="option" onclick="selectOne('region','경상도',this)"><span class="round-check"></span><span class="label">경상도</span></div>
+        <div class="option" onclick="selectOne('region','기타지역',this)"><span class="round-check"></span><span class="label">기타</span></div>
+      </div>
+    </div>
 
-<div id="emartTool" class="tool-card">
-<h2>이마트24 업로드파일 분석</h2>
-<div id="emartDrop" class="drop"><div><p><b>엑셀 파일을 여기로 끌어다 놓으면 바로 분석됩니다.</b><br>여러 파일을 한 번에 올리거나, 나중에 추가로 올려도 결과가 계속 누적됩니다.</p><input id="emartFileInput" type="file" multiple /></div></div>
-<div class="btns"><button id="emartDownloadBtn" class="green" disabled>결과 엑셀 다운로드</button><button id="emartCsvBtn" class="gray" disabled>CSV 다운로드</button><button id="emartResetBtn" class="red">전체 초기화</button></div>
-<div class="notice">기준: 점포명 = 파일명에서 확장자/괄호코드 제거 · 총건수 = 4번째 행부터의 데이터 행 수 · 총걸린시간 = 날짜시간값 중 최대값 - 최소값 · 실사수량1건수 = 실사수량 열에서 값이 1인 행 수</div>
-<div class="summary"><div class="box">파일 수<b id="emartSumFiles">0</b></div><div class="box">총건수 합계<b id="emartSumRows">0</b></div><div class="box">실사수량 1 합계<b id="emartSumOnes">0</b></div><div class="box">총걸린시간 합계<b id="emartSumTime">0초</b></div></div>
-<div style="overflow:auto"><table class="analyzer-table"><thead><tr><th>No</th><th>점포명</th><th>총건수</th><th>총걸린시간</th><th>실사수량1건수</th><th>시작시간</th><th>종료시간</th><th>비고</th><th>삭제</th></tr></thead><tbody id="emartTbody"><tr><td colspan="9">아직 분석된 파일이 없습니다.</td></tr></tbody></table></div>
-</div>
+    <div class="cat-row">
+      <div class="cat-title">브랜드</div>
+      <div class="cat-options" id="brandGroup">
+        <div class="option" onclick="selectOne('brand','이마트24',this)"><span class="round-check"></span><span class="label">이마트24</span></div>
+        <div class="option" onclick="selectOne('brand','세븐일레븐',this)"><span class="round-check"></span><span class="label">세븐</span></div>
+        <div class="option" onclick="selectOne('brand','기타',this)"><span class="round-check"></span><span class="label">기타</span></div>
+      </div>
+    </div>
 
-<div id="sevenTool" class="tool-card hidden">
-<h2>세븐일레븐 J파일 분석</h2>
-<div id="sevenDrop" class="drop"><div><p><b>J파일/텍스트 파일을 여기로 끌어다 놓으면 바로 분석됩니다.</b><br>여러 번 끌어다 놓으면 계속 누적됩니다.</p><input type="file" id="sevenFileInput" multiple></div></div>
-<div class="btns"><button id="sevenExcelBtn" class="green" disabled>엑셀 다운로드</button><button id="sevenClearBtn" class="red">전체 초기화</button></div>
-<div style="overflow:auto"><table class="analyzer-table"><thead><tr><th>No</th><th>파일명</th><th>건수</th><th>작업시간</th><th>1개건수</th><th>삭제</th></tr></thead><tbody id="sevenTbody"><tr><td colspan="6">아직 분석된 파일이 없습니다.</td></tr></tbody></table></div>
-</div>
-</div>
-</div>
-
-<div id="correctionModal" class="correction-modal">
-  <div class="correction-card">
-    <h3>보완요청 메시지</h3>
-    <div id="correctionInfo" class="correction-info"></div>
-    <textarea id="correctionMessage" placeholder="예: 여의도점 담배 재고사진이 누락되었습니다. 보완서류 제출 버튼으로 추가 사진을 올려주세요."></textarea>
-    <div class="correction-actions">
-      <button class="correction-cancel" type="button" onclick="cancelCorrectionRequest()">취소</button>
-      <button class="correction-send" type="button" onclick="sendCorrectionRequest()">보완요청 보내기</button>
+    <div class="cat-row">
+      <div class="cat-title">업무</div>
+      <div class="cat-options" id="workTypeGroup">
+        <div class="option" onclick="selectOne('workType','정기실사',this)"><span class="round-check"></span><span class="label">정기</span></div>
+        <div class="option" onclick="selectOne('workType','인수실사',this)"><span class="round-check"></span><span class="label">인수</span></div>
+        <div class="option" onclick="selectOne('workType','양수도',this)"><span class="round-check"></span><span class="label">양수도</span></div>
+        <div class="option" onclick="selectOne('workType','폐점',this)"><span class="round-check"></span><span class="label">폐점</span></div>
+      </div>
     </div>
   </div>
+
+  <div class="note-title">점포특이사항 기재:</div>
+  <div class="note-box">
+    <div class="note-detail-grid">
+      <label class="note-detail-field">인원이름
+        <input id="workerNames" placeholder="예: 인현태, 김철수">
+      </label>
+      <label class="note-detail-field">건수
+        <input id="workCount" type="number" inputmode="numeric" min="0" placeholder="예: 154">
+      </label>
+      <label class="note-detail-field">걸린시간
+        <input id="workDuration" placeholder="예: 3시간 20분">
+      </label>
+    </div>
+    <div class="note-guide">아래에는 점포 특이사항을 적어주세요. 제출하면 관리자 화면에는 인원이름/건수/걸린시간/특이사항이 함께 정리되어 표시됩니다.</div>
+    <textarea id="note" placeholder="특이사항기재:\n\n예: 냉장 재고 사진 추가 필요 / 담배장 재확인 필요\n\n(필수: 세븐 인수실사시 마스터사용 점포명/매가 기재)"></textarea>
+    <div id="historyBox" class="store-history">점포명을 입력하면 이전 특이사항이 표시됩니다.</div>
+  </div>
+
+  <div class="upload-row">
+    <div class="upload-box upload" onclick="document.getElementById('fileInput').click()">서류 올리기</div>
+    <div class="upload-box camera" onclick="document.getElementById('cameraInput').click()">사진찍기</div>
+  </div>
+
+  <div class="upload-help">
+    <div>노트북 폴더 / 핸드폰 사진첩에서 선택</div>
+    <div>카메라 실행 후 촬영 사진 첨부</div>
+  </div>
+
+  <input id="fileInput" type="file" multiple hidden>
+  <input id="cameraInput" type="file" hidden accept="image/*" capture="environment">
+  <div id="fileList" class="file-list"></div>
+
+  <label class="no-doc-line" onclick="toggleNoDocument(event)">
+    <span id="noDocumentSquare" class="round-check"></span>
+    서류제외시 클릭
+  </label>
+
+  <button class="submit-btn" onclick="submitForm()">제출</button>
+  <div id="result" class="result"></div>
 </div>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script><script>
-const firebaseConfig = {apiKey:"AIzaSyBmvE4sKxvO0OWTz2Nt70o-RuCKBTPds_0",authDomain:"ravebic-app.firebaseapp.com",projectId:"ravebic-app",storageBucket:"ravebic-app.firebasestorage.app",messagingSenderId:"44012584810",appId:"1:44012584810:web:540cd8aba9ca8bbf2baf13",measurementId:"G-EEN6GM72JT"};
-firebase.initializeApp(firebaseConfig);const db=firebase.firestore();const storage=firebase.storage();
-let allRows=[];let filtered=[];let currentPage=1;let pageSize=10;function dtOf(r){return r.submittedAt&&r.submittedAt.toDate?r.submittedAt.toDate():new Date(r.submittedAtText||r.date||0)}
-async function loadData(){document.getElementById('tbody').innerHTML='<tr><td colspan="10" style="text-align:center;padding:35px">불러오는 중...</td></tr>';try{const snap=await db.collection('submissions').get();allRows=[];snap.forEach(d=>allRows.push({id:d.id,...d.data()}));allRows.sort((a,b)=>dtOf(b)-dtOf(a));document.getElementById('conn').textContent='연결 성공 · '+allRows.length+'건';applyFilters();}catch(e){console.error(e);document.getElementById('conn').textContent='연결 실패';document.getElementById('tbody').innerHTML='<tr><td colspan="10">Firebase 연결 실패: '+e.message+'</td></tr>';}}
-function applyFilters(){currentPage=1;const q=document.getElementById('q').value.trim().toLowerCase();const from=document.getElementById('from').value;const to=document.getElementById('to').value;const region=document.getElementById('region').value;const brand=document.getElementById('brand').value;const work=document.getElementById('workType').value;filtered=allRows.filter(r=>{const text=((r.name||'')+' '+(r.store||'')+' '+(r.note||'')).toLowerCase();const d=dtOf(r);if(q&&!text.includes(q))return false;if(from&&d<new Date(from+'T00:00:00'))return false;if(to&&d>new Date(to+'T23:59:59'))return false;if(region&&r.region!==region)return false;if(brand&&r.brand!==brand)return false;if(work&&r.workType!==work)return false;return true;});render();}
 
-function safeJsonForAttr(obj){return encodeURIComponent(JSON.stringify(obj||{}));}
-function buildFileActions(r){
-  const arr = r.files || [];
-  if(!arr.length) return '<span class="small">없음</span>';
-  return arr.map(function(f,i){
-    const fileData = safeJsonForAttr(f);
-    const name = esc(f.name || ('첨부 '+(i+1)));
-    const viewUrl = esc(f.url || '#');
-    return '<div class="file-actions">' +
-      '<a class="file-view-btn" target="_blank" href="'+viewUrl+'">첨부 '+(i+1)+' 보기</a>' +
-      '<button class="file-delete-btn" type="button" onclick="deleteAttachedFile(\''+r.id+'\','+i+',\''+fileData+'\')">삭제</button>' +
-      '<span class="small">'+name+'</span>' +
-      '</div>';
-  }).join('');
-}
-async function deleteAttachedFile(submissionId, fileIndex, encodedFile){
-  if(!confirm('이 첨부파일을 삭제할까요?\nFirebase Storage와 관리자 목록에서 제거됩니다.')) return;
-  let fileObj = {};
-  try{ fileObj = JSON.parse(decodeURIComponent(encodedFile)); }catch(e){}
-  try{
-    if(fileObj.url){
-      try{ await storage.refFromURL(fileObj.url).delete(); }
-      catch(storageErr){ console.warn('Storage delete skipped/failed', storageErr); }
-    }
-    const docRef = db.collection('submissions').doc(submissionId);
-    const doc = await docRef.get();
-    if(doc.exists){
-      const data = doc.data() || {};
-      const files = (data.files || []).filter(function(_,idx){ return idx !== fileIndex; });
-      await docRef.update({files:files, fileDeletedAt: firebase.firestore.FieldValue.serverTimestamp()});
-    }
-    await loadData();
-    alert('첨부파일을 삭제했습니다.');
-  }catch(err){
-    alert('첨부파일 삭제 실패: ' + (err.message || err));
-  }
-}
-async function deleteSubmissionRow(submissionId){
-  if(!confirm('이 제출 건 전체를 삭제할까요?\n첨부파일도 함께 삭제됩니다.')) return;
-  try{
-    const docRef = db.collection('submissions').doc(submissionId);
-    const doc = await docRef.get();
-    if(doc.exists){
-      const data = doc.data() || {};
-      const files = data.files || [];
-      for(const f of files){
-        if(f && f.url){
-          try{ await storage.refFromURL(f.url).delete(); }catch(e){ console.warn('Storage delete skipped/failed', e); }
-        }
-      }
-    }
-    await docRef.delete();
-    await loadData();
-    alert('제출 건을 삭제했습니다.');
-  }catch(err){
-    alert('제출 건 삭제 실패: ' + (err.message || err));
-  }
+<div id="scheduleModal" class="modal">
+  <div class="modal-card">
+    <h3>스케줄 보안 확인</h3>
+    <input id="pinName" placeholder="직원 이름">
+    <input id="pin" type="password" placeholder="개인 PIN 번호">
+    <button class="primary" onclick="checkPin()">스케줄 보기</button>
+    <button class="secondary" onclick="closeScheduleModal()">닫기</button>
+    <p style="font-size:13px;color:#64748b">관리자에 등록된 직원명/PIN으로 일정표를 열 수 있습니다.<br>예: 인현태 / 1111</p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBmvE4sKxvO0OWTz2Nt70o-RuCKBTPds_0",
+  authDomain: "ravebic-app.firebaseapp.com",
+  projectId: "ravebic-app",
+  storageBucket: "ravebic-app.firebasestorage.app",
+  messagingSenderId: "44012584810",
+  appId: "1:44012584810:web:540cd8aba9ca8bbf2baf13",
+  measurementId: "G-EEN6GM72JT"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
+</script>
+
+<script>
+let rememberName=false;
+let selected={region:"",brand:"",workType:""};
+let noDocumentSelected=false;
+function toggleNoDocument(event){
+  if(event){ event.preventDefault(); }
+  noDocumentSelected=!noDocumentSelected;
+  const box=document.getElementById("noDocumentSquare");
+  if(box) box.classList.toggle("active", noDocumentSelected);
 }
 
-function render(){const todayStr=new Date().toDateString();document.getElementById('total').textContent=filtered.length;document.getElementById('today').textContent=filtered.filter(r=>dtOf(r).toDateString()===todayStr).length;document.getElementById('s0').textContent=filtered.filter(r=>(r.status||'미확인')==='미확인').length;document.getElementById('s1').textContent=filtered.filter(r=>r.status==='확인완료').length;document.getElementById('s2').textContent=filtered.filter(r=>r.status==='보완요청').length;const tb=document.getElementById('tbody');const totalPages=Math.max(1,Math.ceil(filtered.length/pageSize));if(currentPage>totalPages)currentPage=totalPages;const start=(currentPage-1)*pageSize;const pageRows=filtered.slice(start,start+pageSize);updatePaginationControls(totalPages);if(!filtered.length){tb.innerHTML='<tr><td colspan="10" style="text-align:center;padding:35px">조건에 맞는 데이터가 없습니다.</td></tr>';return;}tb.innerHTML=pageRows.map(r=>{const files=buildFileActions(r);return '<tr><td>'+dtOf(r).toLocaleString()+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.store)+'</td><td>'+esc(r.region)+'</td><td>'+esc(r.brand)+'</td><td>'+esc(r.workType)+'</td><td>'+esc(r.note||'')+'</td><td>'+files+'</td><td><select onchange="changeStatus(\''+r.id+'\',this.value)"><option '+sel(r,'미확인')+'>미확인</option><option '+sel(r,'확인완료')+'>확인완료</option><option '+sel(r,'보완요청')+'>보완요청</option></select></td><td><button class="row-delete-btn" type="button" onclick="deleteSubmissionRow(\''+r.id+'\')">제출삭제</button></td></tr>';}).join('');setTimeout(function(){if(typeof applyRavebicStatusColors==='function')applyRavebicStatusColors();},30);}
-function updatePaginationControls(totalPages){const info=document.getElementById('pageInfo');const prev=document.getElementById('prevPageBtn');const next=document.getElementById('nextPageBtn');if(info)info.textContent=currentPage+' / '+totalPages+' 페이지 · 총 '+filtered.length+'건';if(prev)prev.disabled=currentPage<=1;if(next)next.disabled=currentPage>=totalPages;}
-function prevPage(){if(currentPage>1){currentPage--;render();}}
-function nextPage(){const totalPages=Math.max(1,Math.ceil(filtered.length/pageSize));if(currentPage<totalPages){currentPage++;render();}}
-function changePageSize(v){pageSize=parseInt(v,10)||10;currentPage=1;render();}
-function esc(v){return String(v||'').replace(/[&<>'"]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s]));}function sel(r,v){return (r.status||'미확인')===v?'selected':''}
+let selectedFiles=[];
 
-let pendingCorrectionId = null;
-let pendingCorrectionPrevStatus = null;
+const storeHistory={
+  "이마트24 강남점":["입점 전 점주 통화 필수","냉장 재고 사진 중요","마스터사장님 매가 기재 요청"],
+  "종로창신역점":["오전 9시 입점 요청","점장 통화 후 방문 필요"],
+  "수유센트럴점":["양수도 실사 이력 있음","사진 누락 주의"]
+};
 
-function openCorrectionModal(id){
-  const r = allRows.find(x=>x.id===id);
-  pendingCorrectionId = id;
-  pendingCorrectionPrevStatus = r ? (r.status || '미확인') : '미확인';
-  const info = document.getElementById('correctionInfo');
-  const msg = document.getElementById('correctionMessage');
-  if(info){
-    info.innerHTML = '<b>직원명:</b> '+esc(r && r.name || '')+'<br><b>점포명:</b> '+esc(r && r.store || '')+'<br><b>업무:</b> '+esc(r && r.workType || '')+'<br><span class="small">직원용 앱의 보완요청함에 이 메시지가 표시됩니다.</span>';
+const pins = {}; // 직원 PIN은 Firebase staffPins에서 확인합니다. // 직원 PIN은 Firebase staffPins에서 확인합니다.
+
+window.addEventListener("load",()=>{
+  const savedName=localStorage.getItem("ravebicSavedName");
+  if(savedName){
+    document.getElementById("name").value=savedName;
+    document.getElementById("pinName").value=savedName;
+    rememberName=true;
+    document.getElementById("rememberSquare").classList.add("active");
   }
-  if(msg){
-    msg.value = (r && r.correctionMessage) ? r.correctionMessage : '';
-    if(!msg.value){ msg.value = (r && r.store ? r.store+' ' : '') + '보완서류가 필요합니다. 부족한 서류/사진을 보완서류 제출 버튼으로 올려주세요.'; }
+  const now=new Date();
+  const local=new Date(now.getTime()-now.getTimezoneOffset()*60000);
+  document.getElementById("date").value=local.toISOString().slice(0,16);
+  setTimeout(updateCorrectionAlertCount, 500);
+});
+
+document.getElementById("name").addEventListener("input",function(){
+  document.getElementById("pinName").value=this.value;
+  if(rememberName){
+    localStorage.setItem("ravebicSavedName",this.value.trim());
   }
-  const modal = document.getElementById('correctionModal');
-  if(modal) modal.style.display='flex';
+  clearTimeout(window.ravebicCorrectionAlertTimer);
+  window.ravebicCorrectionAlertTimer=setTimeout(updateCorrectionAlertCount, 600);
+});
+
+function toggleRemember(){
+  rememberName=!rememberName;
+  document.getElementById("rememberSquare").classList.toggle("active",rememberName);
+  const name=document.getElementById("name").value.trim();
+  if(rememberName&&name){localStorage.setItem("ravebicSavedName",name);}
+  if(!rememberName){localStorage.removeItem("ravebicSavedName");}
 }
 
-function cancelCorrectionRequest(){
-  const modal = document.getElementById('correctionModal');
-  if(modal) modal.style.display='none';
-  if(pendingCorrectionId){
-    const r=allRows.find(x=>x.id===pendingCorrectionId);
-    if(r) r.status = pendingCorrectionPrevStatus || '미확인';
-    pendingCorrectionId = null;
-    pendingCorrectionPrevStatus = null;
-    render();
-  }
+function selectOne(group,value,element){
+  selected[group]=value;
+  let groupId=group==="region"?"regionGroup":group==="brand"?"brandGroup":"workTypeGroup";
+  document.getElementById(groupId).querySelectorAll(".round-check").forEach(s=>s.classList.remove("active"));
+  element.querySelector(".round-check").classList.add("active");
 }
 
-async function sendCorrectionRequest(){
-  const id = pendingCorrectionId;
-  const message = (document.getElementById('correctionMessage')?.value || '').trim();
-  if(!id){ alert('보완요청 대상이 없습니다.'); return; }
-  if(!message){ alert('보완요청 메시지를 입력해주세요.'); return; }
-  try{
-    await db.collection('submissions').doc(id).update({
-      status:'보완요청',
-      correctionMessage: message,
-      correctionRequestedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      correctionRequestedAtText: new Date().toISOString(),
-      correctionSubmittedAt: null,
-      correctionResolved: false,
-      correctionRead: false,
-      statusUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    const r=allRows.find(x=>x.id===id);
-    if(r){
-      r.status='보완요청';
-      r.correctionMessage=message;
-      r.correctionRequestedAtText=new Date().toISOString();
-      r.correctionResolved=false;
-      r.correctionRead=false;
-    }
-    const modal=document.getElementById('correctionModal');
-    if(modal) modal.style.display='none';
-    pendingCorrectionId=null;
-    pendingCorrectionPrevStatus=null;
-    applyFilters();
-    alert('보완요청 메시지를 직원용 앱으로 보냈습니다.');
-  }catch(err){
-    alert('보완요청 저장 실패:\n\n'+(err.message || err));
+document.getElementById("store").addEventListener("input",function(){
+  const value=this.value.trim();
+  const box=document.getElementById("historyBox");
+  if(storeHistory[value]){
+    box.innerHTML="<b>이전 특이사항</b><br>"+storeHistory[value].map(v=>"• "+v).join("<br>");
+  }else if(value){
+    box.innerHTML="등록된 이전 특이사항이 없습니다. 새 특이사항을 입력하면 누적됩니다.";
+  }else{
+    box.innerHTML="점포명을 입력하면 이전 특이사항이 표시됩니다.";
   }
+});
+
+function escText(v){
+  return String(v||"").replace(/[&<>"']/g, s=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[s]));
 }
 
-async function changeStatus(id,status){
-  if(status==='보완요청'){
-    openCorrectionModal(id);
+function renderFileList(){
+  const list=document.getElementById("fileList");
+  if(selectedFiles.length===0){
+    list.innerHTML="";
     return;
   }
-  await db.collection('submissions').doc(id).update({
-    status:status,
-    statusUpdatedAt:firebase.firestore.FieldValue.serverTimestamp(),
-    correctionResolved: status==='확인완료' ? true : false
+  list.innerHTML=selectedFiles.map((file,idx)=>
+    "<div class='file-item'><span>첨부됨: "+escText(file.name)+"</span><button type='button' onclick='removeSelectedFile("+idx+")'>삭제</button></div>"
+  ).join("");
+}
+
+function addFiles(fileList){
+  Array.from(fileList || []).forEach(file=>{
+    selectedFiles.push(file);
   });
-  const r=allRows.find(x=>x.id===id);
-  if(r){r.status=status; r.correctionResolved = status==='확인완료';}
-  applyFilters();
+  renderFileList();
 }
 
-function resetFilters(){['q','from','to','region','brand','workType'].forEach(id=>document.getElementById(id).value='');applyFilters();}
-function extractNotePart(note, label){
-  const text = String(note || '');
-  const re = new RegExp(label + '\\s*:\\s*([\\s\\S]*?)(?=\\n[^\\n:]+\\s*:|$)');
-  const m = text.match(re);
-  return m ? m[1].trim() : '';
+function removeSelectedFile(index){
+  selectedFiles.splice(index,1);
+  renderFileList();
 }
-function cleanDash(v){
-  v = String(v == null ? '' : v).trim();
-  return v === '-' ? '' : v;
-}
-function downloadCSV(){
-  const headers=['제출시간','브랜드','점포명','팀장','팀원','업무','특이사항','건수','시간'];
-  const lines=[headers.join(',')];
 
-  filtered.forEach(r=>{
-    const rawNote = String(r.note || '');
-    const teamLeader = r.name || '';
-    const teamMembers = cleanDash(r.workerNames || extractNotePart(rawNote, '인원이름'));
-    const workCount = cleanDash(r.workCount || extractNotePart(rawNote, '건수')).replace(/건$/,'');
-    const workDuration = cleanDash(r.workDuration || extractNotePart(rawNote, '걸린시간'));
-    const noteDetail = cleanDash(r.noteDetail || extractNotePart(rawNote, '특이사항기재') || rawNote);
+document.getElementById("fileInput").addEventListener("change",e=>{addFiles(e.target.files); e.target.value="";});
+document.getElementById("cameraInput").addEventListener("change",e=>{addFiles(e.target.files); e.target.value="";});
 
-    const vals=[
-      dtOf(r).toLocaleString(),
-      r.brand || '',
-      r.store || '',
-      teamLeader,
-      teamMembers,
-      r.workType || '',
-      noteDetail,
-      workCount,
-      workDuration
-    ].map(v=>'"'+String(v||'').replace(/"/g,'""')+'"');
+function openScheduleModal(){document.getElementById("scheduleModal").style.display="flex";}
+function closeScheduleModal(){document.getElementById("scheduleModal").style.display="none";}
 
-    lines.push(vals.join(','));
-  });
 
-  const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='ravebic_submissions_정리형.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-loadData();
 
-function showAnalyzer(which){document.getElementById('emartTool').classList.toggle('hidden',which!=='emart');document.getElementById('sevenTool').classList.toggle('hidden',which!=='seven');document.getElementById('tabEmart').classList.toggle('active',which==='emart');document.getElementById('tabSeven').classList.toggle('active',which==='seven');}
+async function checkPin(){
+  const name = document.getElementById("pinName").value.trim();
+  const pin = document.getElementById("pin").value.trim();
 
-const emartResults=[];const emartDrop=document.getElementById('emartDrop'),emartInput=document.getElementById('emartFileInput'),emartTbody=document.getElementById('emartTbody');
-function cleanStoreName(name){return name.replace(/\.[^/.]+$/,'').replace(/\s*\(\s*\d+\s*\)\s*/g,' ').replace(/\s+/g,' ').trim();}function isEmpty(v){return v===undefined||v===null||String(v).trim()===''}function onlyDigits(v){return String(v??'').replace(/[^0-9]/g,'')}function parseDate14(v){const s=onlyDigits(v);if(!/^20\d{12}$/.test(s))return null;const y=+s.slice(0,4),m=+s.slice(4,6),d=+s.slice(6,8),h=+s.slice(8,10),mi=+s.slice(10,12),se=+s.slice(12,14);if(m<1||m>12||d<1||d>31||h>23||mi>59||se>59)return null;const dt=new Date(y,m-1,d,h,mi,se);if(dt.getFullYear()!==y||dt.getMonth()!==m-1||dt.getDate()!==d)return null;return dt;}function fmtDate(dt){if(!dt)return'';const p=n=>String(n).padStart(2,'0');return `${dt.getFullYear()}-${p(dt.getMonth()+1)}-${p(dt.getDate())} ${p(dt.getHours())}:${p(dt.getMinutes())}:${p(dt.getSeconds())}`;}function fmtDuration(ms){if(!isFinite(ms)||ms<0)return'0초';let sec=Math.floor(ms/1000),h=Math.floor(sec/3600);sec%=3600;let m=Math.floor(sec/60);sec%=60;const arr=[];if(h)arr.push(`${h}시간`);if(m)arr.push(`${m}분`);arr.push(`${sec}초`);return arr.join(' ');}function findHeaderCol(rows,keywords){const limit=Math.min(rows.length,12);for(let r=0;r<limit;r++)for(let c=0;c<(rows[r]||[]).length;c++){const text=String(rows[r][c]??'').replace(/\s/g,'');if(keywords.some(k=>text.includes(k)))return c;}return-1;}function guessTimeCol(dataRows){const scores={};dataRows.forEach(row=>row.forEach((v,c)=>{if(parseDate14(v))scores[c]=(scores[c]||0)+1;}));let best=-1,score=0;Object.keys(scores).forEach(c=>{if(scores[c]>score){score=scores[c];best=+c;}});return best;}function guessQtyCol(rows,dataRows){let col=findHeaderCol(rows,['실사수량','실사 수량']);if(col>=0)return col;col=findHeaderCol(rows,['수량']);if(col>=0)return col;let best=-1,bestScore=-1;const maxCols=Math.max(...dataRows.map(r=>r.length),0);for(let c=0;c<maxCols;c++){let ones=0,nums=0;for(const row of dataRows){const n=Number(String(row[c]??'').replace(/,/g,'').trim());if(!isNaN(n)){nums++;if(n===1)ones++;}}const score=ones*3+nums*0.05;if(ones>0&&score>bestScore){bestScore=score;best=c;}}return best;}
-async function analyzeEmartFile(file){const buffer=await file.arrayBuffer();let wb;try{wb=XLSX.read(buffer,{type:'array',cellDates:false});}catch(e){return{store:cleanStoreName(file.name),total:0,ones:0,durationMs:0,start:null,end:null,note:'엑셀 파일을 읽지 못했습니다.'};}const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});const dataRows=rows.slice(3).filter(r=>r.some(v=>!isEmpty(v)));const timeCol=guessTimeCol(dataRows);const qtyCol=guessQtyCol(rows,dataRows);const times=[];if(timeCol>=0)dataRows.forEach(r=>{const dt=parseDate14(r[timeCol]);if(dt)times.push(dt);});let start=null,end=null,durationMs=0;if(times.length){start=new Date(Math.min(...times));end=new Date(Math.max(...times));durationMs=end-start;}let ones=0;if(qtyCol>=0)dataRows.forEach(r=>{const n=Number(String(r[qtyCol]??'').replace(/,/g,'').trim());if(n===1)ones++;});const notes=[];if(timeCol<0)notes.push('날짜시간 열 자동 인식 실패');if(qtyCol<0)notes.push('실사수량 열 자동 인식 실패');return{store:cleanStoreName(file.name),total:dataRows.length,ones,durationMs,start,end,note:notes.join(' / ')};}
-async function handleEmartFiles(files){for(const file of files){const r=await analyzeEmartFile(file);emartResults.push(r);}renderEmart();}
-function renderEmart(){if(!emartResults.length){emartTbody.innerHTML='<tr><td colspan="9">아직 분석된 파일이 없습니다.</td></tr>';document.getElementById('emartDownloadBtn').disabled=document.getElementById('emartCsvBtn').disabled=true;}else{emartTbody.innerHTML=emartResults.map((r,i)=>`<tr><td>${i+1}</td><td class="store">${esc(r.store)}</td><td>${r.total.toLocaleString()}</td><td>${fmtDuration(r.durationMs)}</td><td>${r.ones.toLocaleString()}</td><td>${fmtDate(r.start)}</td><td>${fmtDate(r.end)}</td><td class="err">${esc(r.note||'')}</td><td><button class="smallbtn" onclick="delEmartRow(${i})">삭제</button></td></tr>`).join('');document.getElementById('emartDownloadBtn').disabled=document.getElementById('emartCsvBtn').disabled=false;}document.getElementById('emartSumFiles').textContent=emartResults.length.toLocaleString();document.getElementById('emartSumRows').textContent=emartResults.reduce((a,b)=>a+b.total,0).toLocaleString();document.getElementById('emartSumOnes').textContent=emartResults.reduce((a,b)=>a+b.ones,0).toLocaleString();document.getElementById('emartSumTime').textContent=fmtDuration(emartResults.reduce((a,b)=>a+b.durationMs,0));}
-function delEmartRow(i){emartResults.splice(i,1);renderEmart();}
-function exportEmartXlsx(){const aoa=[['No','점포명','총건수','총걸린시간','실사수량1건수','시작시간','종료시간','비고']];emartResults.forEach((r,i)=>aoa.push([i+1,r.store,r.total,fmtDuration(r.durationMs),r.ones,fmtDate(r.start),fmtDate(r.end),r.note]));const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=[{wch:6},{wch:28},{wch:12},{wch:18},{wch:16},{wch:22},{wch:22},{wch:28}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'재고조사요약');XLSX.writeFile(wb,'이마트24_재고조사_요약결과.xlsx');}
-function exportEmartCsv(){const lines=[['No','점포명','총건수','총걸린시간','실사수량1건수','시작시간','종료시간','비고'],...emartResults.map((r,i)=>[i+1,r.store,r.total,fmtDuration(r.durationMs),r.ones,fmtDate(r.start),fmtDate(r.end),r.note])];const csv='\uFEFF'+lines.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download='이마트24_재고조사_요약결과.csv';a.click();URL.revokeObjectURL(a.href);}
-emartDrop.addEventListener('dragover',e=>{e.preventDefault();emartDrop.classList.add('drag')});emartDrop.addEventListener('dragleave',()=>emartDrop.classList.remove('drag'));emartDrop.addEventListener('drop',e=>{e.preventDefault();emartDrop.classList.remove('drag');handleEmartFiles(e.dataTransfer.files)});emartInput.addEventListener('change',e=>handleEmartFiles(e.target.files));document.getElementById('emartDownloadBtn').addEventListener('click',exportEmartXlsx);document.getElementById('emartCsvBtn').addEventListener('click',exportEmartCsv);document.getElementById('emartResetBtn').addEventListener('click',()=>{if(confirm('전체 결과를 초기화할까요?')){emartResults.length=0;emartInput.value='';renderEmart();}});
-
-let sevenResults=[];const sevenDrop=document.getElementById('sevenDrop');function secToText(s){let h=Math.floor(s/3600);let m=Math.floor((s%3600)/60);let sec=s%60;return(h>0?h+'시간 ':'')+m+'분 '+sec+'초';}
-function analyzeSeven(file,text){const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(x=>x.length>0);let secs=[],single=0;lines.forEach(l=>{let d=l.replace(/\D/g,'');if(d.length>=45){let t=d.substring(18,24);let q=parseInt(d.substring(30,35));let hh=parseInt(t.substring(0,2));let mm=parseInt(t.substring(2,4));let ss=parseInt(t.substring(4,6));if(!isNaN(hh)&&!isNaN(mm)&&!isNaN(ss)){secs.push(hh*3600+mm*60+ss);}if(q===1)single++;}});secs.sort((a,b)=>a-b);let dur=secs.length?secs[secs.length-1]-secs[0]:0;return{id:Date.now()+Math.random(),file:file.name,count:lines.length,duration:dur,single:single};}
-function renderSeven(){let tbody=document.getElementById('sevenTbody');if(!sevenResults.length){tbody.innerHTML='<tr><td colspan="6">아직 분석된 파일이 없습니다.</td></tr>';document.getElementById('sevenExcelBtn').disabled=true;return;}tbody.innerHTML='';sevenResults.forEach((r,i)=>{let tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${esc(r.file)}</td><td>${r.count.toLocaleString()}</td><td>${secToText(r.duration)}</td><td>${r.single.toLocaleString()}</td><td><button class="smallbtn" onclick="removeSevenItem('${r.id}')">삭제</button></td>`;tbody.appendChild(tr);});document.getElementById('sevenExcelBtn').disabled=false;}
-function removeSevenItem(id){sevenResults=sevenResults.filter(r=>r.id!=id);renderSeven();}
-function handleSevenFile(file){const reader=new FileReader();reader.onload=function(e){let res=analyzeSeven(file,e.target.result);sevenResults.push(res);renderSeven();};reader.readAsText(file);}
-document.getElementById('sevenFileInput').addEventListener('change',function(e){for(let f of e.target.files){handleSevenFile(f);}e.target.value='';});sevenDrop.addEventListener('dragover',e=>{e.preventDefault();sevenDrop.classList.add('drag');});sevenDrop.addEventListener('dragleave',()=>sevenDrop.classList.remove('drag'));sevenDrop.addEventListener('drop',e=>{e.preventDefault();sevenDrop.classList.remove('drag');for(let f of e.dataTransfer.files){handleSevenFile(f);}});document.getElementById('sevenClearBtn').onclick=function(){if(confirm('전체 삭제?')){sevenResults=[];renderSeven();}};document.getElementById('sevenExcelBtn').onclick=function(){let data=sevenResults.map(r=>({파일명:r.file,건수:r.count,작업시간초:r.duration,작업시간:secToText(r.duration),'1개건수':r.single}));let ws=XLSX.utils.json_to_sheet(data);let wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'결과');XLSX.writeFile(wb,'세븐일레븐_J파일_개별결과.xlsx');};
-const GOOGLE_SCHEDULE_API_URL = "https://script.google.com/macros/s/AKfycbz4wx8Xd67Rna9gKZDEhtUhBLdfl90BUSzYttf0qS18bvN50EZfODxRcN-OAVtiwEWv/exec";
-
-let latestGoogleScheduleSheetName = '주황색 탭';
-let latestGoogleScheduleRange = 'E1:K79';
-let latestGoogleSchedulePdfUrl = GOOGLE_SCHEDULE_API_URL;
-
-function openPdfInBrowser(url) {
-  if (!url) {
-    alert('일정표 주소가 없습니다.');
+  if(!name){
+    alert("직원 이름을 입력해주세요.");
     return;
   }
-  window.open(url, '_blank');
-}
 
-function loadGoogleSchedule() {
-  latestGoogleSchedulePdfUrl = GOOGLE_SCHEDULE_API_URL;
-  openPdfInBrowser(latestGoogleSchedulePdfUrl);
-
-  const status = document.getElementById('googleScheduleStatus');
-  if (status) {
-    status.textContent = '일정표 화면을 새 창으로 열었습니다. 새 창에서 PDF가 보이는지 확인하세요.';
+  if(!pin){
+    alert("PIN 번호를 입력해주세요.");
+    return;
   }
-}
 
-function downloadGoogleScheduleExcel() {
-  latestGoogleSchedulePdfUrl = GOOGLE_SCHEDULE_API_URL;
-  openPdfInBrowser(latestGoogleSchedulePdfUrl);
-}
-
-async function approveGoogleSchedule() {
-  latestGoogleSchedulePdfUrl = GOOGLE_SCHEDULE_API_URL;
-
-  try {
-    await db.collection('settings').doc('approvedSchedule').set({
-      sheetName: latestGoogleScheduleSheetName,
-      range: latestGoogleScheduleRange,
-      pdfUrl: latestGoogleSchedulePdfUrl,
-      scheduleUrl: latestGoogleSchedulePdfUrl,
-      approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      source: 'apps_script_html_viewer'
-    });
-
-    const info = document.getElementById('lastApprovedInfo');
-    if (info) {
-      info.innerHTML = '마지막 승인: ' + new Date().toLocaleString() + '<br>승인자: 인현태';
+  try{
+    if(typeof db === "undefined"){
+      alert("Firebase 연결이 아직 준비되지 않았습니다. 새로고침 후 다시 시도해주세요.");
+      return;
     }
 
-    alert('승인 저장 완료\n\n직원용 일정표에서 Apps Script 일정표 화면을 열 수 있도록 Firebase에 저장했습니다.');
-  } catch(err) {
-    alert('승인 저장 실패:\n\n' + err);
-  }
-}
+    const staffDoc = await db.collection("staffPins").doc(name).get();
 
-async function loadApprovedInfo(){
-  try{
-    const info = document.getElementById('lastApprovedInfo');
-    if(!info) return;
+    if(!staffDoc.exists){
+      alert("등록되지 않은 직원입니다. 관리자에게 문의하세요.");
+      return;
+    }
 
-    const doc = await db.collection('settings').doc('approvedSchedule').get();
+    const staff = staffDoc.data();
+
+    if(staff.active === false){
+      alert("비활성화된 직원입니다. 관리자에게 문의하세요.");
+      return;
+    }
+
+    if(String(staff.pin) !== String(pin)){
+      alert("PIN 번호가 맞지 않습니다.");
+      return;
+    }
+
+    const doc = await db.collection("settings").doc("approvedSchedule").get();
 
     if(!doc.exists){
-      info.innerHTML = '마지막 승인 정보 없음';
+      alert("아직 승인된 일정표가 없습니다.");
       return;
     }
 
     const data = doc.data();
-    let dateText = '-';
+    const scheduleUrl = data.scheduleUrl || data.pdfUrl;
 
-    if(data.updatedAt){
-      dateText = new Date(data.updatedAt).toLocaleString();
-    }
-
-    info.innerHTML =
-      '마지막 승인: ' + dateText +
-      '<br>승인자: ' + (data.approvedBy || '-');
-
-  }catch(e){
-    console.log(e);
-  }
-}
-
-loadApprovedInfo();
-
-
-
-// RAVEBIC_STATUS_COLOR_V2
-function applyRavebicStatusColors(){
-  var selects = document.querySelectorAll('select');
-  selects.forEach(function(sel){
-    var value = (sel.value || '').trim();
-
-    if(value !== '미확인' && value !== '확인완료' && value !== '보완요청'){
+    if(!scheduleUrl){
+      alert("승인된 일정표 주소가 없습니다.");
       return;
     }
 
-    sel.classList.remove('status-done','status-fix','status-pending');
+    window.open(scheduleUrl, "_blank");
+    closeScheduleModal();
 
-    var row = sel.closest('tr');
-    if(row){
-      row.classList.remove('status-row-done','status-row-fix','status-row-pending');
-    }
-
-    var cell = sel.closest('td');
-    if(cell){
-      cell.classList.add('status-cell');
-    }
-
-    if(value === '확인완료'){
-      sel.classList.add('status-done');
-      if(row) row.classList.add('status-row-done');
-    }else if(value === '보완요청'){
-      sel.classList.add('status-fix');
-      if(row) row.classList.add('status-row-fix');
-    }else{
-      sel.classList.add('status-pending');
-      if(row) row.classList.add('status-row-pending');
-    }
-  });
+  }catch(err){
+    alert("일정표를 불러오지 못했습니다.\n\n" + err);
+  }
 }
 
-document.addEventListener('DOMContentLoaded', function(){
-  setTimeout(applyRavebicStatusColors, 300);
-  setTimeout(applyRavebicStatusColors, 1000);
-  setTimeout(applyRavebicStatusColors, 2000);
-});
-
-document.addEventListener('change', function(e){
-  if(e.target && e.target.tagName === 'SELECT'){
-    setTimeout(applyRavebicStatusColors, 50);
-  }
-});
-
-setInterval(applyRavebicStatusColors, 1500);
-
-
-
-// RAVEBIC_ADMIN_LOGIN_SAFE_98765
-const RAVEBIC_ADMIN_PASSWORD = "98765";
-function unlockAdminPage(){
-  const lock = document.getElementById("adminLockScreen");
-  if(lock){ lock.remove(); }
-  document.body.style.overflow = "auto";
-  sessionStorage.setItem("ravebicAdminUnlocked", "Y");
+function getSavedSubmissions(){
+  try{return JSON.parse(localStorage.getItem("ravebicSubmissions")||"[]");}
+  catch(e){return [];}
 }
-function adminLogin(){
-  const input = document.getElementById("adminPasswordInput");
-  const error = document.getElementById("adminLockError");
-  const pw = input ? input.value.trim() : "";
-  if(pw === RAVEBIC_ADMIN_PASSWORD){ unlockAdminPage(); }
-  else{ if(error) error.style.display = "block"; if(input) input.focus(); }
+
+function saveSubmission(record){
+  const all=getSavedSubmissions();
+  all.push(record);
+  localStorage.setItem("ravebicSubmissions",JSON.stringify(all));
 }
-function adminLogout(){
-  sessionStorage.removeItem("ravebicAdminUnlocked");
-  location.reload();
+
+function showMySubmissions(){
+  const name=document.getElementById("name").value.trim();
+  const panel=document.getElementById("myHistoryPanel");
+  if(!name){alert("먼저 이름을 입력해주세요.");return;}
+
+  const oneMonthAgo=new Date(Date.now()-30*24*60*60*1000);
+  const list=getSavedSubmissions()
+    .filter(r=>r.name===name)
+    .filter(r=>new Date(r.submittedAt)>=oneMonthAgo)
+    .sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt));
+
+  panel.style.display="block";
+  if(list.length===0){
+    panel.innerHTML="<div class='history-title'>최근 1개월 제출내역</div>해당 이름으로 저장된 제출내역이 없습니다.";
+    return;
+  }
+
+  panel.innerHTML="<div class='history-title'>최근 1개월 제출내역 ("+list.length+"건)</div>"+
+    list.map(r=>"<div class='history-item'><b>"+r.store+"</b><br>제출: "+new Date(r.submittedAt).toLocaleString()+"<br>구분: "+r.region+" / "+r.brand+" / "+r.workType+"<br>특이사항: "+(r.note||"없음")+"</div>").join("");
 }
-setTimeout(function(){
-  const btn = document.getElementById("adminLoginBtn");
-  const input = document.getElementById("adminPasswordInput");
-  if(sessionStorage.getItem("ravebicAdminUnlocked") === "Y"){ unlockAdminPage(); return; }
-  if(btn) btn.onclick = adminLogin;
-  if(input){
-    input.focus();
-    input.addEventListener("keydown", function(e){ if(e.key === "Enter") adminLogin(); });
-  }
-},100);
 
-</script>
-<script>
-// RAVEBIC_STAFF_PIN_SAFE_V2
-(function(){
-  function safeText(v){
-    return String(v == null ? '' : v)
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;')
-      .replace(/'/g,'&#39;');
+function hideMySubmissions(){
+  document.getElementById("myHistoryPanel").style.display="none";
+}
+
+
+
+
+async function updateCorrectionAlertCount(){
+  const btn=document.getElementById("correctionAlertBtn");
+  if(!btn || typeof db === "undefined") return;
+
+  const name=document.getElementById("name").value.trim();
+  if(!name){
+    btn.classList.remove("correction-alert-active");
+    btn.textContent="보완요청함 확인";
+    return;
   }
 
-  function staffDocId(name){
-    return String(name || '').trim();
-  }
-
-  window.loadStaffPins = async function(){
-    const tbody = document.getElementById('staffPinTbody');
-    const status = document.getElementById('staffPinStatus');
-    if(!tbody || typeof db === 'undefined') return;
-
-    try{
-      const snap = await db.collection('staffPins').get();
-      const rows = [];
-
-      snap.forEach(function(doc){
-        const d = doc.data() || {};
-        let updated = '-';
-        if(d.updatedAt && d.updatedAt.toDate){
-          updated = d.updatedAt.toDate().toLocaleString();
-        }
-        rows.push({
-          id: doc.id,
-          name: d.name || doc.id,
-          pin: d.pin || '',
-          updated: updated
-        });
-      });
-
-      rows.sort(function(a,b){ return a.name.localeCompare(b.name, 'ko'); });
-
-      if(rows.length === 0){
-        tbody.innerHTML = '<tr><td colspan="4">등록된 직원 PIN이 없습니다.</td></tr>';
-        if(status) status.textContent = '등록된 직원 PIN이 없습니다.';
-        return;
+  try{
+    const snap=await db.collection("submissions").where("name","==",name).get();
+    let count=0;
+    snap.forEach(doc=>{
+      const d=doc.data() || {};
+      if((d.status||"")==="보완요청" && d.correctionResolved !== true){
+        count++;
       }
+    });
 
-      tbody.innerHTML = rows.map(function(r){
-        return '<tr>' +
-          '<td>' + safeText(r.name) + '</td>' +
-          '<td>' + safeText(r.pin) + '</td>' +
-          '<td>' + safeText(r.updated) + '</td>' +
-          '<td><button class="pin-del" type="button" data-staff-name="' + safeText(r.id) + '">삭제</button></td>' +
-          '</tr>';
-      }).join('');
-
-      if(status) status.textContent = '직원 PIN ' + rows.length + '명 등록됨';
-
-    }catch(err){
-      tbody.innerHTML = '<tr><td colspan="4">직원 PIN 목록 불러오기 실패: ' + safeText(err.message || err) + '</td></tr>';
-      if(status) status.textContent = '직원 PIN 목록 불러오기 실패';
-    }
-  };
-
-  window.saveStaffPin = async function(){
-    const nameEl = document.getElementById('staffNameInput');
-    const pinEl = document.getElementById('staffPinInput');
-
-    const name = nameEl ? nameEl.value.trim() : '';
-    const pin = pinEl ? pinEl.value.trim() : '';
-
-    if(!name){ alert('직원명을 입력하세요.'); return; }
-    if(!pin){ alert('PIN을 입력하세요.'); return; }
-
-    try{
-      await db.collection('staffPins').doc(staffDocId(name)).set({
-        name: name,
-        pin: pin,
-        active: true,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge:true });
-
-      alert('직원 PIN 저장 완료');
-      await window.loadStaffPins();
-
-    }catch(err){
-      alert('직원 PIN 저장 실패:\n\n' + err);
-    }
-  };
-
-  window.deleteStaffPin = async function(name){
-    if(!name) return;
-    if(!confirm(name + ' 직원 PIN을 삭제할까요?')) return;
-
-    try{
-      await db.collection('staffPins').doc(staffDocId(name)).delete();
-      await window.loadStaffPins();
-    }catch(err){
-      alert('삭제 실패:\n\n' + err);
-    }
-  };
-
-  window.seedDefaultStaff = async function(){
-    const nameEl = document.getElementById('staffNameInput');
-    const pinEl = document.getElementById('staffPinInput');
-    if(nameEl) nameEl.value = '인현태';
-    if(pinEl) pinEl.value = '1111';
-    await window.saveStaffPin();
-  };
-
-  document.addEventListener('click', function(e){
-    if(e.target && e.target.id === 'saveStaffPinBtn'){
-      window.saveStaffPin();
-    }
-    if(e.target && e.target.id === 'refreshStaffPinBtn'){
-      window.loadStaffPins();
-    }
-    if(e.target && e.target.classList.contains('pin-del')){
-      window.deleteStaffPin(e.target.getAttribute('data-staff-name'));
-    }
-  });
-
-  setTimeout(function(){
-    if(typeof db !== 'undefined'){
-      window.loadStaffPins();
+    if(count>0){
+      btn.classList.add("correction-alert-active");
+      btn.textContent="🔴 보완요청 " + count + "건";
     }else{
-      const status = document.getElementById('staffPinStatus');
-      if(status) status.textContent = 'Firebase 연결 확인 중입니다. 잠시 후 목록 새로고침을 눌러보세요.';
+      btn.classList.remove("correction-alert-active");
+      btn.textContent="보완요청함 확인";
     }
-  }, 1200);
-})();
-</script>
+  }catch(e){
+    console.log("보완요청 알림 확인 실패", e);
+  }
+}
 
-</body></html>
+async function showCorrectionRequests(){
+  const name=document.getElementById("name").value.trim();
+  const panel=document.getElementById("correctionPanel");
+  if(!name){alert("먼저 이름을 입력해주세요.");return;}
+
+  const isRegisteredStaff = await verifyRegisteredStaffName(name);
+  if(!isRegisteredStaff) return;
+
+  panel.style.display="block";
+  panel.innerHTML="<div class='history-title'>보완요청함</div>불러오는 중입니다...";
+
+  try{
+    const snap = await db.collection("submissions").where("name","==",name).get();
+    const rows=[];
+    snap.forEach(doc=>{
+      const d=doc.data() || {};
+      if((d.status||"")==="보완요청" && d.correctionResolved !== true){
+        rows.push({id:doc.id,...d});
+      }
+    });
+    rows.sort((a,b)=>new Date(b.correctionRequestedAtText||b.submittedAtText||0)-new Date(a.correctionRequestedAtText||a.submittedAtText||0));
+
+    if(rows.length===0){
+      const btn=document.getElementById("correctionAlertBtn");
+      if(btn){ btn.classList.remove("correction-alert-active"); btn.textContent="보완요청함 확인"; }
+      panel.innerHTML="<div class='history-title'>보완요청함</div>현재 보완요청이 없습니다.";
+      return;
+    }
+
+    const btn=document.getElementById("correctionAlertBtn");
+    if(btn){ btn.classList.add("correction-alert-active"); btn.textContent="🔴 보완요청 "+rows.length+"건"; }
+
+    panel.innerHTML="<div class='history-title'>보완요청함 ("+rows.length+"건)</div>"+
+      rows.map(r=>{
+        const reqTime = r.correctionRequestedAt && r.correctionRequestedAt.toDate ? r.correctionRequestedAt.toDate().toLocaleString() : (r.correctionRequestedAtText ? new Date(r.correctionRequestedAtText).toLocaleString() : "-");
+        return "<div class='correction-item' id='correction_"+escText(r.id)+"'>"+
+          "<b>"+escText(r.store||"점포명 없음")+"</b><br>"+
+          "요청시간: "+escText(reqTime)+"<br>"+
+          "구분: "+escText((r.region||"")+" / "+(r.brand||"")+" / "+(r.workType||""))+"<br>"+
+          "<div class='correction-msg'>"+escText(r.correctionMessage||"보완서류가 필요합니다.")+"</div>"+
+          "<div class='correction-upload'>"+
+          "<input id='correctionFile_"+escText(r.id)+"' type='file' multiple>"+
+          "<button type='button' onclick=\"submitCorrectionFiles('"+escText(r.id)+"')\">보완서류 제출</button>"+
+          "</div>"+
+          "</div>";
+      }).join("");
+
+    for(const r of rows){
+      if(r.correctionRead !== true){
+        db.collection("submissions").doc(r.id).update({correctionRead:true}).catch(()=>{});
+      }
+    }
+  }catch(err){
+    panel.innerHTML="<div class='history-title'>보완요청함</div>불러오기 실패: "+escText(err.message || err);
+  }
+}
+
+async function submitCorrectionFiles(docId){
+  const input=document.getElementById("correctionFile_"+docId);
+  if(!input || !input.files || input.files.length===0){
+    alert("보완으로 제출할 파일을 선택해주세요.");
+    return;
+  }
+  const box=document.getElementById("correction_"+docId);
+  const files=Array.from(input.files);
+  if(box){ box.insertAdjacentHTML('beforeend', "<div class='correction-msg'>보완서류 업로드 중입니다...</div>"); }
+
+  try{
+    const uploaded=[];
+    for(let i=0;i<files.length;i++){
+      const file=files[i];
+      const path="submissions/"+docId+"/corrections/"+Date.now()+"_"+String(i+1).padStart(2,"0")+"_"+safeFileName(file.name);
+      const ref=storage.ref().child(path);
+      await ref.put(file);
+      const url=await ref.getDownloadURL();
+      uploaded.push({name:file.name,size:file.size,type:file.type||"",path:path,url:url,uploadedAt:new Date().toISOString()});
+    }
+
+    const docRef=db.collection("submissions").doc(docId);
+    await docRef.update({
+      correctionFiles: firebase.firestore.FieldValue.arrayUnion(...uploaded),
+      files: firebase.firestore.FieldValue.arrayUnion(...uploaded),
+      status:"미확인",
+      correctionSubmittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      correctionSubmittedAtText: new Date().toISOString(),
+      correctionResolved:false,
+      statusUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    alert("보완서류 제출이 완료되었습니다.");
+    showCorrectionRequests();
+    setTimeout(updateCorrectionAlertCount, 700);
+  }catch(err){
+    alert("보완서류 제출 실패:\n\n"+(err.message || err));
+  }
+}
+
+function hideCorrectionRequests(){
+  document.getElementById("correctionPanel").style.display="none";
+}
+
+async function verifyRegisteredStaffName(name){
+  if(typeof db === "undefined"){
+    alert("Firebase 연결이 아직 준비되지 않았습니다. 새로고침 후 다시 시도해주세요.");
+    return false;
+  }
+
+  const staffDoc = await db.collection("staffPins").doc(name).get();
+
+  if(!staffDoc.exists){
+    alert("관리자에 등록되지 않은 직원명입니다.\n\n직원명을 확인하거나 관리자에게 등록 요청하세요.");
+    return false;
+  }
+
+  const staff = staffDoc.data();
+
+  if(staff.active === false){
+    alert("비활성화된 직원명입니다. 관리자에게 문의하세요.");
+    return false;
+  }
+
+  return true;
+}
+
+function safeFileName(name){
+  return String(name || "file").replace(/[\\/:*?"<>|#%&{}$!'`@+=]/g,"_").replace(/\s+/g,"_");
+}
+
+async function uploadSelectedFiles(docId){
+  const uploaded=[];
+  for(let i=0;i<selectedFiles.length;i++){
+    const file=selectedFiles[i];
+    const path="submissions/"+docId+"/"+String(i+1).padStart(2,"0")+"_"+safeFileName(file.name);
+    const ref=storage.ref().child(path);
+    await ref.put(file);
+    const url=await ref.getDownloadURL();
+    uploaded.push({
+      name:file.name,
+      size:file.size,
+      type:file.type || "",
+      path:path,
+      url:url
+    });
+  }
+  return uploaded;
+}
+
+async function submitForm(){
+  const name=document.getElementById("name").value.trim();
+  const date=document.getElementById("date").value;
+  const store=document.getElementById("store").value.trim();
+  const workerNames=document.getElementById("workerNames").value.trim();
+  const workCount=document.getElementById("workCount").value.trim();
+  const workDuration=document.getElementById("workDuration").value.trim();
+  const noteDetail=document.getElementById("note").value.trim();
+  const note="인원이름: "+(workerNames||"-")+"\n건수: "+(workCount?workCount+"건":"-")+"\n걸린시간: "+(workDuration||"-")+"\n특이사항기재: "+(noteDetail||"-");
+
+  if(!name)return alert("이름을 입력해주세요.");
+
+  const isRegisteredStaff = await verifyRegisteredStaffName(name);
+  if(!isRegisteredStaff) return;
+  if(!date)return alert("날짜를 입력해주세요.");
+  if(!store)return alert("점포명을 입력해주세요.");
+  if(!workerNames)return alert("인원이름을 입력해주세요.");
+  if(!workCount)return alert("건수를 입력해주세요.");
+  if(!workDuration)return alert("걸린시간을 입력해주세요.");
+  if(!selected.region)return alert("지역을 선택해주세요.");
+  if(!selected.brand)return alert("브랜드를 선택해주세요.");
+  if(!selected.workType)return alert("업무유형을 선택해주세요.");
+  if(selectedFiles.length === 0 && !noDocumentSelected){
+    return alert("첨부파일이 없으면 서류제외시 클릭을 체크해야 제출할 수 있습니다.");
+  }
+
+  const result=document.getElementById("result");
+  result.style.display="block";
+  result.innerHTML="<b>제출 중입니다...</b><br>첨부파일을 서버에 업로드하고 있습니다.";
+
+  try{
+    const docRef = db.collection("submissions").doc();
+    const uploadedFiles = await uploadSelectedFiles(docRef.id);
+
+    const record={
+      name,date,store,note,
+      workerNames: workerNames,
+      workCount: workCount,
+      workDuration: workDuration,
+      noteDetail: noteDetail,
+      noDocument: noDocumentSelected,
+      region:selected.region,
+      brand:selected.brand,
+      workType:selected.workType,
+      files: uploadedFiles,
+      noDocument: noDocumentSelected,
+      status:"미확인",
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      submittedAtText: new Date().toISOString()
+    };
+
+    await docRef.set(record);
+
+    saveSubmission({
+      name,date,store,note,
+      workerNames: workerNames,
+      workCount: workCount,
+      workDuration: workDuration,
+      noteDetail: noteDetail,
+      noDocument: noDocumentSelected,
+      region:selected.region,
+      brand:selected.brand,
+      workType:selected.workType,
+      files: uploadedFiles.map(f=>({name:f.name,url:f.url})),
+      submittedAt:new Date().toISOString()
+    });
+
+    result.innerHTML="<b>제출 완료</b><br>직원명: "+escText(name)+"<br>날짜: "+escText(date)+"<br>점포명: "+escText(store)+"<br>지역: "+escText(selected.region)+"<br>브랜드: "+escText(selected.brand)+"<br>업무유형: "+escText(selected.workType)+"<br>인원이름: "+escText(workerNames)+"<br>건수: "+escText(workCount)+"건<br>걸린시간: "+escText(workDuration)+"<br>특이사항: "+escText(noteDetail||"없음")+"<br>첨부파일: "+uploadedFiles.length+"개<br>서버 제출시간: "+new Date().toLocaleString();
+
+    document.getElementById("workerNames").value="";
+    document.getElementById("workCount").value="";
+    document.getElementById("workDuration").value="";
+    document.getElementById("note").value="";
+    selectedFiles=[];
+    renderFileList();
+  }catch(err){
+    console.error(err);
+    result.innerHTML="<b>제출 실패</b><br>Firebase 저장 또는 파일 업로드에 실패했습니다.<br>"+escText(err.message || err);
+    alert("제출 실패:\n\n" + (err.message || err));
+  }
+}
+</script>
+</body>
+</html>
