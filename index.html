@@ -432,6 +432,24 @@ body{
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBmvE4sKxvO0OWTz2Nt70o-RuCKBTPds_0",
+  authDomain: "ravebic-app.firebaseapp.com",
+  projectId: "ravebic-app",
+  storageBucket: "ravebic-app.firebasestorage.app",
+  messagingSenderId: "44012584810",
+  appId: "1:44012584810:web:540cd8aba9ca8bbf2baf13",
+  measurementId: "G-EEN6GM72JT"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
+</script>
+
 <script>
 let rememberName=false;
 let selected={region:"",brand:"",workType:""};
@@ -442,7 +460,7 @@ const storeHistory={
   "수유센트럴점":["양수도 실사 이력 있음","사진 누락 주의"]
 };
 
-const pins = {}; // 직원 PIN은 Firebase staffPins에서 확인합니다.
+const pins = {}; // 직원 PIN은 Firebase staffPins에서 확인합니다. // 직원 PIN은 Firebase staffPins에서 확인합니다.
 
 window.addEventListener("load",()=>{
   const savedName=localStorage.getItem("ravebicSavedName");
@@ -508,6 +526,7 @@ function openScheduleModal(){document.getElementById("scheduleModal").style.disp
 function closeScheduleModal(){document.getElementById("scheduleModal").style.display="none";}
 
 
+
 async function checkPin(){
   const name = document.getElementById("pinName").value.trim();
   const pin = document.getElementById("pin").value.trim();
@@ -523,6 +542,11 @@ async function checkPin(){
   }
 
   try{
+    if(typeof db === "undefined"){
+      alert("Firebase 연결이 아직 준비되지 않았습니다. 새로고침 후 다시 시도해주세요.");
+      return;
+    }
+
     const staffDoc = await db.collection("staffPins").doc(name).get();
 
     if(!staffDoc.exists){
