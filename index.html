@@ -247,6 +247,19 @@ body{
   color:#334155;
   line-height:1.55;
 }
+.history-lookup-btn{
+  width:100%;
+  margin-top:10px;
+  padding:11px 13px;
+  border:1px solid #bfdbfe;
+  border-radius:13px;
+  background:#eff6ff;
+  color:#1d4ed8;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+.history-lookup-btn:hover{filter:brightness(.98)}
 .upload-row{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -487,7 +500,8 @@ body{
     </div>
     <div class="note-guide">아래에는 점포 특이사항을 적어주세요. 제출하면 관리자 화면에는 인원이름/건수/걸린시간/특이사항이 함께 정리되어 표시됩니다.</div>
     <textarea id="note" placeholder="점포 특이사항 및 세븐인수실사시 마스터사용 점포명과 매가 필수기재"></textarea>
-    <div id="historyBox" class="store-history">점포명을 입력하면 이전 특이사항이 표시됩니다.</div>
+    <button type="button" class="history-lookup-btn" onclick="loadStoreHistoryFromFirebase()">이전 특이사항 조회</button>
+    <div id="historyBox" class="store-history">점포명을 입력한 뒤 엔터 또는 조회 버튼을 누르면 이전 특이사항이 표시됩니다.</div>
   </div>
 
   <div class="upload-row">
@@ -604,14 +618,92 @@ function selectOne(group,value,element){
 document.getElementById("store").addEventListener("input",function(){
   const value=this.value.trim();
   const box=document.getElementById("historyBox");
-  if(storeHistory[value]){
-    box.innerHTML="<b>이전 특이사항</b><br>"+storeHistory[value].map(v=>"• "+v).join("<br>");
-  }else if(value){
-    box.innerHTML="등록된 이전 특이사항이 없습니다. 새 특이사항을 입력하면 누적됩니다.";
-  }else{
-    box.innerHTML="점포명을 입력하면 이전 특이사항이 표시됩니다.";
+  if(!value){
+    box.innerHTML="점포명을 입력한 뒤 엔터 또는 조회 버튼을 누르면 이전 특이사항이 표시됩니다.";
+    return;
+  }
+  box.innerHTML="점포명을 입력한 뒤 엔터 또는 조회 버튼을 누르면 이전 특이사항을 조회합니다.";
+  clearTimeout(window.ravebicStoreHistoryTimer);
+  window.ravebicStoreHistoryTimer=setTimeout(loadStoreHistoryFromFirebase, 900);
+});
+
+document.getElementById("store").addEventListener("keydown",function(e){
+  if(e.key === "Enter"){
+    e.preventDefault();
+    loadStoreHistoryFromFirebase();
   }
 });
+
+document.getElementById("store").addEventListener("blur",function(){
+  loadStoreHistoryFromFirebase();
+});
+
+function normalizeStoreName(v){
+  return String(v || "").replace(/\s+/g, "").toLowerCase();
+}
+
+async function loadStoreHistoryFromFirebase(){
+  const storeEl=document.getElementById("store");
+  const box=document.getElementById("historyBox");
+  const value=storeEl ? storeEl.value.trim() : "";
+
+  if(!box) return;
+  if(!value){
+    box.innerHTML="점포명을 입력한 뒤 엔터 또는 조회 버튼을 누르면 이전 특이사항이 표시됩니다.";
+    return;
+  }
+
+  box.innerHTML="<b>이전 특이사항 조회 중...</b>";
+
+  try{
+    let rows=[];
+
+    // 1차: 점포명이 정확히 같은 제출건 조회
+    const snap=await db.collection("submissions").where("store", "==", value).get();
+    snap.forEach(doc=>rows.push({id:doc.id, ...doc.data()}));
+
+    // 2차: 띄어쓰기 차이 때문에 못 찾는 경우를 위해 최근 제출건에서 점포명 보정 검색
+    if(rows.length===0){
+      const recent=await db.collection("submissions").limit(150).get();
+      const target=normalizeStoreName(value);
+      recent.forEach(doc=>{
+        const d=doc.data() || {};
+        if(normalizeStoreName(d.store) === target){
+          rows.push({id:doc.id, ...d});
+        }
+      });
+    }
+
+    rows=rows.filter(r=>r && (r.noteDetail || r.note || r.workerNames || r.workCount || r.workDuration));
+
+    rows.sort((a,b)=>{
+      const da=a.submittedAt && a.submittedAt.toDate ? a.submittedAt.toDate() : new Date(a.submittedAtText || a.date || 0);
+      const dbb=b.submittedAt && b.submittedAt.toDate ? b.submittedAt.toDate() : new Date(b.submittedAtText || b.date || 0);
+      return dbb-da;
+    });
+
+    if(rows.length===0){
+      box.innerHTML="<b>이전 특이사항 없음</b><br>이 점포명으로 저장된 이전 특이사항을 찾지 못했습니다.";
+      return;
+    }
+
+    const html=rows.slice(0,5).map(r=>{
+      const d=r.submittedAt && r.submittedAt.toDate ? r.submittedAt.toDate() : new Date(r.submittedAtText || r.date || 0);
+      const dateText=isNaN(d.getTime()) ? "날짜 없음" : d.toLocaleString();
+      const noteText=(r.noteDetail || r.note || "").replace(/^인원이름:.*?특이사항기재:/s, "").trim();
+      const people=r.workerNames ? "<br>인원: "+escText(r.workerNames) : "";
+      const count=r.workCount ? " / 건수: "+escText(r.workCount) : "";
+      const duration=r.workDuration ? " / 시간: "+escText(r.workDuration) : "";
+      return "<div class='history-item'><b>"+escText(dateText)+"</b>"+people+count+duration+"<br>특이사항: "+escText(noteText || "없음")+"</div>";
+    }).join("");
+
+    box.innerHTML="<b>이전 특이사항 "+rows.length+"건 발견</b><br>최근 5건까지 표시합니다."+html;
+
+  }catch(err){
+    console.error(err);
+    box.innerHTML="<b>이전 특이사항 조회 실패</b><br>잠시 후 다시 조회해 주세요.<br>오류: "+escText(err.message || err);
+  }
+}
 
 function escText(v){
   return String(v||"").replace(/[&<>"']/g, s=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[s]));
