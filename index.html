@@ -296,6 +296,23 @@ body{
   padding:6px 9px;
   cursor:pointer;
 }
+
+.no-doc-line{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:10px 0 18px 4px;
+  font-size:16px;
+  font-weight:800;
+  cursor:pointer;
+  user-select:none;
+  color:#111827;
+}
+.no-doc-line .round-check{
+  width:24px;
+  height:24px;
+}
+
 .submit-btn{
   width:100%;
   min-height:66px;
@@ -487,6 +504,11 @@ body{
   <input id="cameraInput" type="file" hidden accept="image/*" capture="environment">
   <div id="fileList" class="file-list"></div>
 
+  <label class="no-doc-line" onclick="toggleNoDocument(event)">
+    <span id="noDocumentSquare" class="round-check"></span>
+    서류제외시 클릭
+  </label>
+
   <button class="submit-btn" onclick="submitForm()">제출</button>
   <div id="result" class="result"></div>
 </div>
@@ -523,6 +545,14 @@ const storage = firebase.storage();
 <script>
 let rememberName=false;
 let selected={region:"",brand:"",workType:""};
+let noDocumentSelected=false;
+function toggleNoDocument(event){
+  if(event){ event.preventDefault(); }
+  noDocumentSelected=!noDocumentSelected;
+  const box=document.getElementById("noDocumentSquare");
+  if(box) box.classList.toggle("active", noDocumentSelected);
+}
+
 let selectedFiles=[];
 
 const storeHistory={
@@ -921,8 +951,8 @@ async function submitForm(){
   if(!selected.region)return alert("지역을 선택해주세요.");
   if(!selected.brand)return alert("브랜드를 선택해주세요.");
   if(!selected.workType)return alert("업무유형을 선택해주세요.");
-  if(selectedFiles.length === 0){
-    return alert("사진찍기 또는 서류올리기 중 하나 이상 첨부해야 제출할 수 있습니다.");
+  if(selectedFiles.length === 0 && !noDocumentSelected){
+    return alert("첨부파일이 없으면 서류제외시 클릭을 체크해야 제출할 수 있습니다.");
   }
 
   const result=document.getElementById("result");
@@ -939,10 +969,12 @@ async function submitForm(){
       workCount: workCount,
       workDuration: workDuration,
       noteDetail: noteDetail,
+      noDocument: noDocumentSelected,
       region:selected.region,
       brand:selected.brand,
       workType:selected.workType,
       files: uploadedFiles,
+      noDocument: noDocumentSelected,
       status:"미확인",
       submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
       submittedAtText: new Date().toISOString()
@@ -956,6 +988,7 @@ async function submitForm(){
       workCount: workCount,
       workDuration: workDuration,
       noteDetail: noteDetail,
+      noDocument: noDocumentSelected,
       region:selected.region,
       brand:selected.brand,
       workType:selected.workType,
