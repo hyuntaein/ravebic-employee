@@ -970,7 +970,7 @@ async function submitCorrectionFiles(docId){
     await docRef.update({
       correctionFiles: firebase.firestore.FieldValue.arrayUnion(...uploaded),
       files: firebase.firestore.FieldValue.arrayUnion(...uploaded),
-      status:"미확인",
+      status:"제출완료",
       correctionSubmittedAt: firebase.firestore.FieldValue.serverTimestamp(),
       correctionSubmittedAtText: new Date().toISOString(),
       correctionResolved:false,
@@ -1081,7 +1081,7 @@ async function submitForm(){
       workType:selected.workType,
       files: uploadedFiles,
       noDocument: noDocumentSelected,
-      status:"미확인",
+      status:"제출완료",
       submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
       submittedAtText: new Date().toISOString()
     };
@@ -1119,105 +1119,20 @@ async function submitForm(){
 </script>
 
 <script>
-// RAVEBIC_EMPLOYEE_ADMIN_MESSAGE_INBOX_V1
-async function loadAdminDirectMessagesForEmployee(){
-  const name = (document.getElementById('name')?.value || '').trim();
-  if(!name) return [];
-
-  try{
-    const snap = await db.collection('adminMessages')
-      .where('targetName', '==', name)
-      .get();
-
-    const rows = [];
-    snap.forEach(function(doc){
-      const d = doc.data() || {};
-      rows.push({id:doc.id, ...d});
-    });
-
-    rows.sort(function(a,b){
-      const da = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAtText || 0);
-      const dbb = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAtText || 0);
-      return dbb - da;
-    });
-
-    return rows;
-  }catch(err){
-    console.error('adminMessages load failed', err);
-    return [];
+// RAVEBIC_EMPLOYEE_WORKFLOW_STATUS_V1
+(function(){
+  const oldSubmitForm = window.submitForm;
+  if(typeof oldSubmitForm === 'function' && !window.ravebicEmployeeWorkflowWrapped){
+    window.ravebicEmployeeWorkflowWrapped = true;
+    window.submitForm = async function(){
+      await oldSubmitForm();
+      const result = document.getElementById('result');
+      if(result && result.innerHTML.indexOf('제출 완료') >= 0){
+        result.innerHTML += '<br><b>상태: 제출완료</b>';
+      }
+    };
   }
-}
-
-const originalShowCorrectionRequests = window.showCorrectionRequests;
-
-window.showCorrectionRequests = async function(){
-  const panel = document.getElementById('correctionPanel');
-  const name = (document.getElementById('name')?.value || '').trim();
-
-  if(!name){
-    alert('이름을 먼저 입력해주세요.');
-    return;
-  }
-
-  if(panel){
-    panel.style.display = 'block';
-    panel.innerHTML = '<div class="history-title">보완요청함 불러오는 중...</div>';
-  }
-
-  let baseHtml = '';
-  try{
-    if(typeof originalShowCorrectionRequests === 'function'){
-      await originalShowCorrectionRequests();
-      baseHtml = panel ? panel.innerHTML : '';
-    }
-  }catch(e){
-    console.warn(e);
-  }
-
-  const msgs = await loadAdminDirectMessagesForEmployee();
-
-  const msgHtml = msgs.length ? (
-    '<div class="history-title">관리자 메세지</div>' +
-    msgs.map(function(m){
-      const d = m.createdAt && m.createdAt.toDate ? m.createdAt.toDate() : new Date(m.createdAtText || 0);
-      const dateText = isNaN(d.getTime()) ? '' : d.toLocaleString();
-      return '<div class="correction-item">' +
-        '<b>' + escText(dateText || '관리자 메세지') + '</b>' +
-        '<div class="correction-msg">' + escText(m.message || '') + '</div>' +
-        '</div>';
-    }).join('')
-  ) : '';
-
-  if(panel){
-    if(baseHtml && baseHtml.indexOf('보완요청이 없습니다') === -1){
-      panel.innerHTML = baseHtml + msgHtml;
-    }else if(msgHtml){
-      panel.innerHTML = msgHtml;
-    }else{
-      panel.innerHTML = '<div class="history-title">보완요청함</div><div class="correction-item">현재 보완요청이나 관리자 메세지가 없습니다.</div>';
-    }
-  }
-};
-
-const originalUpdateCorrectionAlertCount = window.updateCorrectionAlertCount;
-
-window.updateCorrectionAlertCount = async function(){
-  if(typeof originalUpdateCorrectionAlertCount === 'function'){
-    try{ await originalUpdateCorrectionAlertCount(); }catch(e){ console.warn(e); }
-  }
-
-  const name = (document.getElementById('name')?.value || '').trim();
-  const btn = document.getElementById('correctionAlertBtn');
-  if(!name || !btn) return;
-
-  const msgs = await loadAdminDirectMessagesForEmployee();
-  const unread = msgs.filter(function(m){ return m.read !== true && m.status !== 'read'; }).length;
-
-  if(unread > 0){
-    btn.classList.add('correction-alert-active');
-    btn.textContent = '보완요청함 확인 (' + unread + ')';
-  }
-};
+})();
 </script>
 
 </body>
