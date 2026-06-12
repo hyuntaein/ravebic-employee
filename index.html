@@ -63,6 +63,35 @@ body{
   padding:12px;
   font-size:16px;
 }
+
+.store-input-wrap{
+  position:relative;
+}
+.store-input-wrap input{
+  position:relative;
+  z-index:1;
+  background:transparent;
+}
+.store-placeholder{
+  position:absolute;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:0;
+  color:#6b7280;
+  font-size:16px;
+  font-weight:400;
+  pointer-events:auto;
+  white-space:nowrap;
+}
+.store-placeholder span{
+  color:#dc2626;
+  font-weight:900;
+}
+.store-placeholder.hidden{
+  display:none;
+}
+
 .fixed-line{
   display:flex;
   align-items:center;
@@ -450,7 +479,12 @@ body{
   <div id="correctionPanel" class="correction-panel"></div>
 
   <div class="row">
-    <div class="field">점포명:<input id="store" placeholder="예) 여의도점까지 직접 입력"></div>
+    <div class="field store-field">점포명:
+      <div class="store-input-wrap">
+        <input id="store" placeholder="">
+        <div id="storePlaceholder" class="store-placeholder" onclick="document.getElementById('store').focus()">예) 여의도<span>점</span>까지 직접 입력</div>
+      </div>
+    </div>
     <div class="schedule" onclick="openScheduleModal()">일정표</div>
   </div>
 
@@ -617,6 +651,7 @@ function selectOne(group,value,element){
 }
 
 document.getElementById("store").addEventListener("input",function(){
+  updateStorePlaceholderDisplay();
   const value=this.value.trim();
   const box=document.getElementById("historyBox");
   if(!value){
@@ -637,7 +672,19 @@ document.getElementById("store").addEventListener("keydown",function(e){
 
 document.getElementById("store").addEventListener("blur",function(){
   loadStoreHistoryFromFirebase();
+  updateStorePlaceholderDisplay();
 });
+
+document.getElementById("store").addEventListener("focus", updateStorePlaceholderDisplay);
+window.addEventListener("load", updateStorePlaceholderDisplay);
+
+function updateStorePlaceholderDisplay(){
+  const storeInput=document.getElementById("store");
+  const ph=document.getElementById("storePlaceholder");
+  if(!storeInput || !ph) return;
+  ph.classList.toggle("hidden", !!storeInput.value.trim());
+}
+
 
 function normalizeStoreName(v){
   return String(v || "").replace(/\s+/g, "").toLowerCase();
