@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RAVEBIC 개인비서 V5</title>
+<title>RAVEBIC 개인비서 V5 - 날짜/사진명 수정</title>
 <style>
 *{box-sizing:border-box}
 body{
@@ -737,7 +737,7 @@ function renderFileList(){
     return;
   }
   list.innerHTML=selectedFiles.map((file,idx)=>
-    "<div class='file-item'><span>첨부됨: "+escText(file.name)+"</span><button type='button' onclick='removeSelectedFile("+idx+")'>삭제</button></div>"
+    "<div class='file-item'><span>첨부됨: "+escText(file.ravebicDisplayName || file.name)+"</span><button type='button' onclick='removeSelectedFile("+idx+")'>삭제</button></div>"
   ).join("");
 }
 
@@ -754,7 +754,7 @@ function removeSelectedFile(index){
 }
 
 document.getElementById("fileInput").addEventListener("change",e=>{addFiles(e.target.files); e.target.value="";});
-document.getElementById("cameraInput").addEventListener("change",e=>{addFiles(e.target.files); e.target.value="";});
+document.getElementById("cameraInput").addEventListener("change",e=>{addCameraFilesWithName(e.target.files); e.target.value="";});
 
 function openScheduleModal(){document.getElementById("scheduleModal").style.display="flex";}
 function closeScheduleModal(){document.getElementById("scheduleModal").style.display="none";}
@@ -1019,6 +1019,52 @@ async function verifyRegisteredStaffName(name){
   return true;
 }
 
+
+
+/* RAVEBIC_PHOTO_RENAME_V1 - 사진찍기 후 파일명 직접 입력 */
+function getFileExtension(name, type){
+  const m = String(name || '').match(/\.[^.]+$/);
+  if(m) return m[0];
+  if(String(type || '').includes('png')) return '.png';
+  if(String(type || '').includes('webp')) return '.webp';
+  return '.jpg';
+}
+
+function cleanInputFileName(name){
+  return String(name || '')
+    .replace(/[\\/:*?"<>|#%&{}$!'`@+=]/g, '_')
+    .replace(/\s+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .trim();
+}
+
+function renameFileObject(file, newBaseName){
+  const ext = getFileExtension(file && file.name, file && file.type);
+  const clean = cleanInputFileName(newBaseName) || ('사진_' + new Date().toISOString().replace(/[-:T.]/g,'').slice(0,14));
+  const finalName = /\.[a-z0-9]{2,5}$/i.test(clean) ? clean : clean + ext;
+  try{
+    return new File([file], finalName, {type:file.type || 'image/jpeg', lastModified:file.lastModified || Date.now()});
+  }catch(e){
+    // 아주 오래된 브라우저 대비: 원본 파일을 그대로 쓰되 표시용 이름만 보정
+    file.ravebicDisplayName = finalName;
+    return file;
+  }
+}
+
+function addCameraFilesWithName(fileListObj){
+  const files = Array.from(fileListObj || []);
+  if(!files.length) return;
+  const storeEl = document.getElementById('store');
+  const storeName = storeEl ? storeEl.value.trim() : '';
+  files.forEach(function(file, idx){
+    const baseDefault = (storeName ? storeName + '_' : '') + '사진' + (files.length > 1 ? '_' + (idx+1) : '');
+    let name = window.prompt('사진 파일명을 입력하세요.\n예: 간판, 냉장고, 담배진열대', baseDefault);
+    if(name === null) name = baseDefault;
+    selectedFiles.push(renameFileObject(file, name));
+  });
+  renderFileList();
+}
+
 function safeFileName(name){
   return String(name || "file").replace(/[\\/:*?"<>|#%&{}$!'`@+=]/g,"_").replace(/\s+/g,"_");
 }
@@ -1077,7 +1123,7 @@ async function submitForm(){
     const uploadedFiles = await uploadSelectedFiles(docRef.id);
 
     const record={
-      name,date,store,note,
+      name,date,inspectionDate:date,inspectionDateText:String(date||"").slice(0,10),workDateText:String(date||"").slice(0,10),store,note,
       workerNames: workerNames,
       workCount: workCount,
       workDuration: workDuration,
@@ -1096,7 +1142,7 @@ async function submitForm(){
     await docRef.set(record);
 
     saveSubmission({
-      name,date,store,note,
+      name,date,inspectionDate:date,inspectionDateText:String(date||"").slice(0,10),workDateText:String(date||"").slice(0,10),store,note,
       workerNames: workerNames,
       workCount: workCount,
       workDuration: workDuration,
