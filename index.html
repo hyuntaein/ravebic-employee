@@ -838,7 +838,7 @@ async function checkPin(){
     }
 
     closeScheduleModal();
-    openPdfViewModal(scheduleUrl);
+    window.open(scheduleUrl, "_blank");
 
   }catch(err){
     alert("일정표를 불러오지 못했습니다.\n\n" + err);
