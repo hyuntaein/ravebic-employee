@@ -545,6 +545,28 @@ body{
   </div>
 </div>
 
+<div id="pdfViewModal" class="modal" style="align-items:stretch;justify-content:stretch;padding:0;">
+  <div style="display:flex;flex-direction:column;width:100%;height:100%;background:#fff;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#111827;color:#fff;">
+      <span style="font-weight:800;">이번 주 일정표</span>
+      <button type="button" onclick="closePdfViewModal()" style="background:#ef4444;color:#fff;border:0;border-radius:8px;padding:8px 14px;font-weight:800;cursor:pointer;">닫기</button>
+    </div>
+    <iframe id="pdfViewFrame" src="" style="flex:1;border:0;width:100%;height:100%;background:#525659;"></iframe>
+  </div>
+</div>
+
+<script>
+function openPdfViewModal(url){
+  document.getElementById("pdfViewFrame").src = url;
+  document.getElementById("pdfViewModal").style.display = "flex";
+}
+function closePdfViewModal(){
+  document.getElementById("pdfViewModal").style.display = "none";
+  document.getElementById("pdfViewFrame").src = "";
+}
+</script>
+
+
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
@@ -815,8 +837,8 @@ async function checkPin(){
       return;
     }
 
-    window.open(scheduleUrl, "_blank");
     closeScheduleModal();
+    openPdfViewModal(scheduleUrl);
 
   }catch(err){
     alert("일정표를 불러오지 못했습니다.\n\n" + err);
