@@ -545,6 +545,18 @@ body{
   </div>
 </div>
 
+<div id="editSubmissionModal" class="modal">
+  <div class="modal-card">
+    <h3>제출내역 수정</h3>
+    <div style="font-size:13px;color:#64748b;margin-bottom:8px;">특이사항 내용과 첨부파일을 수정할 수 있습니다. (관리자가 확인완료 처리 전까지만 가능)</div>
+    <textarea id="editNoteDetail" rows="4" style="width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:12px;font-size:15px;margin-bottom:10px;box-sizing:border-box;"></textarea>
+    <div id="editFileListBox" style="margin-bottom:8px;"></div>
+    <input type="file" multiple onchange="addEditNewFiles(this)" style="margin-bottom:10px;">
+    <button id="editSaveBtn" class="primary" onclick="saveEditSubmission()">저장</button>
+    <button class="secondary" onclick="closeEditSubmission()">닫기</button>
+  </div>
+</div>
+
 <div id="pdfViewModal" class="modal" style="align-items:stretch;justify-content:stretch;padding:0;">
   <div style="display:flex;flex-direction:column;width:100%;height:100%;background:#fff;">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#111827;color:#fff;">
@@ -856,25 +868,147 @@ function saveSubmission(record){
   localStorage.setItem("ravebicSubmissions",JSON.stringify(all));
 }
 
-function showMySubmissions(){
+async function showMySubmissions(){
   const name=document.getElementById("name").value.trim();
   const panel=document.getElementById("myHistoryPanel");
   if(!name){alert("먼저 이름을 입력해주세요.");return;}
 
-  const oneMonthAgo=new Date(Date.now()-30*24*60*60*1000);
-  const list=getSavedSubmissions()
-    .filter(r=>r.name===name)
-    .filter(r=>new Date(r.submittedAt)>=oneMonthAgo)
-    .sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt));
-
   panel.style.display="block";
-  if(list.length===0){
-    panel.innerHTML="<div class='history-title'>최근 1개월 제출내역</div>해당 이름으로 저장된 제출내역이 없습니다.";
-    return;
-  }
+  panel.innerHTML="<div class='history-title'>최근 1개월 제출내역</div>불러오는 중입니다...";
 
-  panel.innerHTML="<div class='history-title'>최근 1개월 제출내역 ("+list.length+"건)</div>"+
-    list.map(r=>"<div class='history-item'><b>"+r.store+"</b><br>제출: "+new Date(r.submittedAt).toLocaleString()+"<br>구분: "+r.region+" / "+r.brand+" / "+r.workType+"<br>특이사항: "+(r.note||"없음")+"</div>").join("");
+  try{
+    const oneMonthAgo=new Date(Date.now()-30*24*60*60*1000);
+    const snap=await db.collection("submissions").where("name","==",name).get();
+    const list=[];
+    snap.forEach(doc=>{
+      const d=doc.data()||{};
+      const submittedAt = d.submittedAtText ? new Date(d.submittedAtText) : (d.submittedAt && d.submittedAt.toDate ? d.submittedAt.toDate() : null);
+      if(submittedAt && submittedAt>=oneMonthAgo){
+        list.push({id:doc.id, ...d, _submittedAt:submittedAt});
+      }
+    });
+    list.sort((a,b)=>b._submittedAt-a._submittedAt);
+
+    if(list.length===0){
+      panel.innerHTML="<div class='history-title'>최근 1개월 제출내역</div>해당 이름으로 저장된 제출내역이 없습니다.";
+      return;
+    }
+
+    panel.innerHTML="<div class='history-title'>최근 1개월 제출내역 ("+list.length+"건)</div>"+
+      list.map(r=>{
+        const locked = r.status==="확인완료";
+        const editBtn = locked
+          ? "<span style='color:#94a3b8;font-size:13px;'>관리자 확인완료 (수정불가)</span>"
+          : "<button type='button' onclick=\"openEditSubmission('"+escText(r.id)+"')\" style='margin-top:6px;border:none;background:#2563eb;color:#fff;border-radius:8px;padding:8px 12px;font-weight:800;cursor:pointer;'>수정</button>";
+        return "<div class='history-item' id='hist_"+escText(r.id)+"'><b>"+escText(r.store||"")+"</b><br>제출: "+r._submittedAt.toLocaleString()+"<br>구분: "+escText(r.region||"")+" / "+escText(r.brand||"")+" / "+escText(r.workType||"")+"<br>특이사항: "+escText(r.noteDetail||r.note||"없음")+"<br>상태: "+escText(r.status||"제출완료")+"<br>"+editBtn+"</div>";
+      }).join("");
+  }catch(err){
+    panel.innerHTML="<div class='history-title'>최근 1개월 제출내역</div>불러오기 실패: "+escText(err.message||err);
+  }
+}
+
+let editRemovedFiles=[];
+let editNewFiles=[];
+let editingDocId=null;
+
+async function openEditSubmission(docId){
+  try{
+    const doc=await db.collection("submissions").doc(docId).get();
+    if(!doc.exists){alert("해당 제출건을 찾을 수 없습니다.");return;}
+    const d=doc.data();
+    if(d.status==="확인완료"){alert("이미 관리자가 확인완료 처리한 건은 수정할 수 없습니다.");return;}
+
+    editingDocId=docId;
+    editRemovedFiles=[];
+    editNewFiles=[];
+
+    document.getElementById("editNoteDetail").value=d.noteDetail||d.note||"";
+    renderEditFileList(d.files||[]);
+    document.getElementById("editSubmissionModal").style.display="flex";
+  }catch(err){
+    alert("불러오기 실패:\n\n"+(err.message||err));
+  }
+}
+
+function closeEditSubmission(){
+  document.getElementById("editSubmissionModal").style.display="none";
+  editingDocId=null;
+}
+
+function renderEditFileList(existingFiles){
+  const box=document.getElementById("editFileListBox");
+  const remaining=(existingFiles||[]).filter(f=>!editRemovedFiles.includes(f.path||f.url));
+  let html="";
+  remaining.forEach(f=>{
+    html+="<div class='file-item'><span>"+escText(f.name)+"</span><button type='button' onclick=\"removeEditExistingFile('"+escText(f.path||f.url)+"')\">삭제</button></div>";
+  });
+  editNewFiles.forEach((f,idx)=>{
+    html+="<div class='file-item'><span>(신규) "+escText(f.name)+"</span><button type='button' onclick=\"removeEditNewFile("+idx+")\">삭제</button></div>";
+  });
+  box.innerHTML=html || "<div style='color:#94a3b8;font-size:13px;'>첨부파일 없음</div>";
+  box.dataset.remaining=JSON.stringify(remaining);
+}
+
+function removeEditExistingFile(key){
+  editRemovedFiles.push(key);
+  const remaining=JSON.parse(document.getElementById("editFileListBox").dataset.remaining||"[]");
+  renderEditFileList(remaining);
+}
+
+function removeEditNewFile(idx){
+  editNewFiles.splice(idx,1);
+  const remaining=JSON.parse(document.getElementById("editFileListBox").dataset.remaining||"[]");
+  renderEditFileList(remaining);
+}
+
+function addEditNewFiles(input){
+  const files=Array.from(input.files||[]);
+  editNewFiles=editNewFiles.concat(files);
+  const remaining=JSON.parse(document.getElementById("editFileListBox").dataset.remaining||"[]");
+  renderEditFileList(remaining);
+  input.value="";
+}
+
+async function saveEditSubmission(){
+  if(!editingDocId)return;
+  const noteDetail=document.getElementById("editNoteDetail").value.trim();
+  const box=document.getElementById("editFileListBox");
+  const remainingFiles=JSON.parse(box.dataset.remaining||"[]");
+
+  const saveBtn=document.getElementById("editSaveBtn");
+  saveBtn.disabled=true;
+  saveBtn.textContent="저장 중입니다...";
+
+  try{
+    const uploaded=[];
+    for(let i=0;i<editNewFiles.length;i++){
+      const file=editNewFiles[i];
+      const path="submissions/"+editingDocId+"/edits/"+Date.now()+"_"+String(i+1).padStart(2,"0")+"_"+safeFileName(file.name);
+      const ref=storage.ref().child(path);
+      await ref.put(file);
+      const url=await ref.getDownloadURL();
+      uploaded.push({name:file.name,size:file.size,type:file.type||"",path:path,url:url,uploadedAt:new Date().toISOString()});
+    }
+
+    const finalFiles=remainingFiles.concat(uploaded);
+
+    await db.collection("submissions").doc(editingDocId).update({
+      noteDetail: noteDetail,
+      note: noteDetail,
+      files: finalFiles,
+      editedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      editedAtText: new Date().toISOString()
+    });
+
+    alert("수정이 완료되었습니다.");
+    closeEditSubmission();
+    showMySubmissions();
+  }catch(err){
+    alert("수정 실패:\n\n"+(err.message||err));
+  }finally{
+    saveBtn.disabled=false;
+    saveBtn.textContent="저장";
+  }
 }
 
 function hideMySubmissions(){
