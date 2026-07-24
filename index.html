@@ -532,6 +532,34 @@ body{
 
   <button class="submit-btn" onclick="submitForm()">제출</button>
   <div id="result" class="result"></div>
+
+  <div style="margin-top:24px;padding-top:20px;border-top:2px solid #e2e8f0;">
+    <h3 style="margin:0 0 10px;">알바 등록</h3>
+    <div class="cat-options" id="ptRegionGroup">
+      <div class="option" onclick="selectPtRegion('서울경기',this)"><span class="round-check"></span><span class="label">서울경기</span></div>
+      <div class="option" onclick="selectPtRegion('충청도',this)"><span class="round-check"></span><span class="label">충청도</span></div>
+      <div class="option" onclick="selectPtRegion('경상도',this)"><span class="round-check"></span><span class="label">경상도</span></div>
+      <div class="option" onclick="selectPtRegion('기타지역',this)"><span class="round-check"></span><span class="label">기타</span></div>
+    </div>
+    <label style="display:block;margin-top:10px;">
+      알바이름:
+      <input id="ptName" placeholder="알바 이름">
+    </label>
+    <label style="display:block;margin-top:10px;">
+      전화번호:
+      <input id="ptPhone" placeholder="예: 010-1234-5678" inputmode="tel">
+    </label>
+    <label style="display:block;margin-top:10px;">
+      나이:
+      <input id="ptAge" placeholder="예: 23" inputmode="numeric">
+    </label>
+    <label style="display:block;margin-top:10px;">
+      날짜:
+      <input id="ptDate" type="date">
+    </label>
+    <button class="submit-btn" style="margin-top:14px;" onclick="submitPartTimeStaff()">알바 등록</button>
+    <div id="ptResult" class="result"></div>
+  </div>
 </div>
 
 <div id="scheduleModal" class="modal">
@@ -1242,6 +1270,53 @@ async function uploadSelectedFiles(docId){
     });
   }
   return uploaded;
+}
+
+let ptSelectedRegion="";
+function selectPtRegion(value,element){
+  ptSelectedRegion=value;
+  document.getElementById("ptRegionGroup").querySelectorAll(".round-check").forEach(s=>s.classList.remove("active"));
+  element.querySelector(".round-check").classList.add("active");
+}
+
+async function submitPartTimeStaff(){
+  const region=ptSelectedRegion;
+  const name=document.getElementById("ptName").value.trim();
+  const phone=document.getElementById("ptPhone").value.trim();
+  const age=document.getElementById("ptAge").value.trim();
+  const workDate=document.getElementById("ptDate").value.trim();
+  const myName=document.getElementById("name").value.trim();
+  const resultBox=document.getElementById("ptResult");
+
+  if(!region){alert("지역을 선택해주세요.");return;}
+  if(!name){alert("알바이름을 입력해주세요.");return;}
+  if(!phone){alert("전화번호를 입력해주세요.");return;}
+  if(!age){alert("나이를 입력해주세요.");return;}
+  if(!workDate){alert("날짜를 선택해주세요.");return;}
+
+  try{
+    const docRef=await db.collection("partTimeStaff").add({
+      region: region,
+      name: name,
+      phone: phone,
+      age: age,
+      workDate: workDate,
+      submittedBy: myName || "",
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      submittedAtText: new Date().toISOString()
+    });
+
+    resultBox.innerHTML="<b>알바 등록 완료</b><br>지역: "+escText(region)+"<br>알바이름: "+escText(name)+"<br>전화번호: "+escText(phone)+"<br>나이: "+escText(age)+"<br>날짜: "+escText(workDate);
+
+    document.getElementById("ptName").value="";
+    document.getElementById("ptPhone").value="";
+    document.getElementById("ptAge").value="";
+    document.getElementById("ptDate").value="";
+    ptSelectedRegion="";
+    document.getElementById("ptRegionGroup").querySelectorAll(".round-check").forEach(s=>s.classList.remove("active"));
+  }catch(err){
+    alert("알바 등록 실패:\n\n"+(err.message||err));
+  }
 }
 
 async function submitForm(){
