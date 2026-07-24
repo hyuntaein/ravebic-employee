@@ -534,30 +534,35 @@ body{
   <div id="result" class="result"></div>
 
   <div style="margin-top:24px;padding-top:20px;border-top:2px solid #e2e8f0;">
-    <h3 style="margin:0 0 10px;">알바 등록</h3>
-    <div class="cat-options" id="ptRegionGroup">
-      <div class="option" onclick="selectPtRegion('서울경기',this)"><span class="round-check"></span><span class="label">서울경기</span></div>
-      <div class="option" onclick="selectPtRegion('충청도',this)"><span class="round-check"></span><span class="label">충청도</span></div>
-      <div class="option" onclick="selectPtRegion('경상도',this)"><span class="round-check"></span><span class="label">경상도</span></div>
-      <div class="option" onclick="selectPtRegion('기타지역',this)"><span class="round-check"></span><span class="label">기타</span></div>
+    <div class="note-title">알바 등록</div>
+    <div class="cat-options" id="ptRegionGroup" style="margin-bottom:16px;">
+      <div class="option" onclick="selectPtRegion('일산',this)"><span class="round-check"></span><span class="label">일산</span></div>
+      <div class="option" onclick="selectPtRegion('인천',this)"><span class="round-check"></span><span class="label">인천</span></div>
+      <div class="option" onclick="selectPtRegion('김포',this)"><span class="round-check"></span><span class="label">김포</span></div>
+      <div class="option" onclick="selectPtRegion('파주',this)"><span class="round-check"></span><span class="label">파주</span></div>
+      <div class="option" onclick="selectPtRegion('포천',this)"><span class="round-check"></span><span class="label">포천</span></div>
+      <div class="option" onclick="selectPtRegion('의정부',this)"><span class="round-check"></span><span class="label">의정부</span></div>
+      <div class="option" onclick="selectPtRegion('남양주',this)"><span class="round-check"></span><span class="label">남양주</span></div>
+      <div class="option" onclick="selectPtRegion('서울',this)"><span class="round-check"></span><span class="label">서울</span></div>
+      <div class="option" onclick="selectPtRegion('기타',this)"><span class="round-check"></span><span class="label">기타</span></div>
     </div>
-    <label style="display:block;margin-top:10px;">
-      알바이름:
-      <input id="ptName" placeholder="알바 이름">
-    </label>
-    <label style="display:block;margin-top:10px;">
-      전화번호:
-      <input id="ptPhone" placeholder="예: 010-1234-5678" inputmode="tel">
-    </label>
-    <label style="display:block;margin-top:10px;">
-      나이:
-      <input id="ptAge" placeholder="예: 23" inputmode="numeric">
-    </label>
-    <label style="display:block;margin-top:10px;">
-      날짜:
-      <input id="ptDate" type="date">
-    </label>
-    <button class="submit-btn" style="margin-top:14px;" onclick="submitPartTimeStaff()">알바 등록</button>
+    <div class="note-box" style="min-height:0;">
+      <div class="note-detail-grid">
+        <label class="note-detail-field">알바이름
+          <input id="ptName" placeholder="알바 이름">
+        </label>
+        <label class="note-detail-field">전화번호
+          <input id="ptPhone" placeholder="예: 010-1234-5678" inputmode="tel">
+        </label>
+        <label class="note-detail-field">나이
+          <input id="ptAge" placeholder="예: 23" inputmode="numeric">
+        </label>
+        <label class="note-detail-field">날짜
+          <input id="ptDate" type="date">
+        </label>
+      </div>
+    </div>
+    <button class="submit-btn" onclick="submitPartTimeStaff()">알바 등록</button>
     <div id="ptResult" class="result"></div>
   </div>
 </div>
