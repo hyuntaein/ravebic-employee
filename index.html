@@ -134,7 +134,7 @@ body{
   margin-top:8px;
 }
 .schedule{
-  border:1px solid #d1d5db;
+  border:1px solid #9fc3ff;
   border-radius:22px;
   min-height:76px;
   padding:14px 16px;
@@ -144,7 +144,8 @@ body{
   font-size:20px;
   font-weight:900;
   cursor:pointer;
-  background:#fff;
+  background:#eaf4ff;
+  color:#153b73;
 }
 .category-area{
   margin:22px 0 24px;
@@ -572,6 +573,10 @@ body{
     <h3>스케줄 보안 확인</h3>
     <input id="pinName" placeholder="직원 이름">
     <input id="pin" type="password" placeholder="개인 PIN 번호">
+    <label class="fixed-line" onclick="togglePinRemember()">
+      <span id="rememberPinSquare" class="round-check"></span>
+      비번 기억
+    </label>
     <button class="primary" onclick="checkPin()">스케줄 보기</button>
     <button class="secondary" onclick="closeScheduleModal()">닫기</button>
     <p style="font-size:13px;color:#64748b">관리자에 등록된 직원명/PIN으로 일정표를 열 수 있습니다.<br>예: 인현태 / 1111</p>
@@ -823,7 +828,33 @@ function removeSelectedFile(index){
 document.getElementById("fileInput").addEventListener("change",e=>{addFiles(e.target.files); e.target.value="";});
 document.getElementById("cameraInput").addEventListener("change",e=>{addCameraFilesWithName(e.target.files); e.target.value="";});
 
-function openScheduleModal(){document.getElementById("scheduleModal").style.display="flex";}
+let rememberPin=false;
+function openScheduleModal(){
+  document.getElementById("scheduleModal").style.display="flex";
+  const savedPin=localStorage.getItem("ravebicSavedPin");
+  const pinInput=document.getElementById("pin");
+  const rememberSq=document.getElementById("rememberPinSquare");
+  if(savedPin){
+    pinInput.value=savedPin;
+    rememberPin=true;
+    if(rememberSq)rememberSq.classList.add("active");
+  }else{
+    rememberPin=false;
+    if(rememberSq)rememberSq.classList.remove("active");
+  }
+  const pinNameInput=document.getElementById("pinName");
+  const savedName=localStorage.getItem("ravebicSavedName");
+  if(savedName && pinNameInput && !pinNameInput.value.trim()){
+    pinNameInput.value=savedName;
+  }
+}
+function togglePinRemember(){
+  rememberPin=!rememberPin;
+  document.getElementById("rememberPinSquare").classList.toggle("active",rememberPin);
+  const pin=document.getElementById("pin").value.trim();
+  if(rememberPin&&pin){localStorage.setItem("ravebicSavedPin",pin);}
+  if(!rememberPin){localStorage.removeItem("ravebicSavedPin");}
+}
 function closeScheduleModal(){document.getElementById("scheduleModal").style.display="none";}
 
 
@@ -866,6 +897,8 @@ async function checkPin(){
       alert("PIN 번호가 맞지 않습니다.");
       return;
     }
+
+    if(rememberPin){localStorage.setItem("ravebicSavedPin",pin);}
 
     const doc = await db.collection("settings").doc("approvedSchedule").get();
 
